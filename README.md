@@ -65,6 +65,7 @@ Project--7-ASA-Policy-App-2026/
 ## Developers
 
 - Chisom Chiobi
+- Victor Jason-Nwachukwu
 
 ## Getting Started
 
