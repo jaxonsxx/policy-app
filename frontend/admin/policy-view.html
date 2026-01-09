@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Policy - ASA Policy App</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-page">
+    <header class="admin-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="../assets/asalogo.png" alt="ASA Logo">
+            </div>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search..." id="searchInput">
+                </div>
+                <div class="user-menu">
+                    <span class="user-icon">👤</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <nav class="sidebar-nav">
+                <a href="policies.html" class="nav-item active">
+                    <span>Active Policies</span>
+                </a>
+                <a href="bylaw.html" class="nav-item">
+                    <span>Bylaws</span>
+                </a>
+                <a href="approvals.html" class="nav-item">
+                    <span>Policies for Approval</span>
+                </a>
+                <a href="suggestions-manage.html" class="nav-item">
+                    <span>Student Suggestion</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="admin-main">
+            <div class="page-header">
+                <h1 id="policyTitle">Policy Details</h1>
+                <div class="view-actions">
+                    <button class="btn btn-primary" id="editBtn" onclick="editPolicy()">Edit Policy</button>
+                    <button class="btn btn-secondary" onclick="window.location.href='policies.html'">Back to Policies</button>
+                </div>
+            </div>
+
+            <div class="policy-view-container">
+                <div class="policy-view-card">
+                    <div class="policy-view-header">
+                        <div class="policy-view-meta">
+                            <div class="policy-view-id">
+                                <strong>Policy ID:</strong> <span id="policyId"></span>
+                            </div>
+                            <div class="policy-view-section">
+                                <strong>Section:</strong> <span id="policySection"></span>
+                            </div>
+                            <div class="policy-view-type">
+                                <strong>Type:</strong> <span id="policyType"></span>
+                            </div>
+                            <div class="policy-view-status">
+                                <strong>Status:</strong> <span id="policyStatus"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="policy-view-content">
+                        <div id="policyContent"></div>
+                    </div>
+                    <div class="policy-view-footer">
+                        <div class="policy-view-dates">
+                            <div><strong>Created:</strong> <span id="createdAt"></span></div>
+                            <div><strong>Last Updated:</strong> <span id="updatedAt"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="../js/admin.js"></script>
+    <script>
+        // Load policy data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const policyId = urlParams.get('id');
+            
+            if (policyId) {
+                loadPolicyView(policyId);
+            } else {
+                window.location.href = 'policies.html';
+            }
+        });
+
+        function loadPolicyView(id) {
+            const policies = getPolicies();
+            const policy = policies.find(p => p.id === id);
+            
+            if (!policy) {
+                alert('Policy not found');
+                window.location.href = 'policies.html';
+                return;
+            }
+
+            // Populate the view
+            document.getElementById('policyTitle').textContent = policy.name || policy.policyName || 'Untitled Policy';
+            document.getElementById('policyId').textContent = policy.policyId || policy.id;
+            document.getElementById('policySection').textContent = `Section ${policy.section || 'N/A'}`;
+            document.getElementById('policyType').textContent = formatPolicyType(policy.type || policy.policyType || 'policy');
+            
+            const statusClass = policy.status || 'draft';
+            const statusText = statusClass.charAt(0).toUpperCase() + statusClass.slice(1);
+            document.getElementById('policyStatus').innerHTML = `<span class="policy-status ${statusClass}">${statusText}</span>`;
+            
+            // Format content with line breaks
+            const content = policy.content || policy.policyContent || 'No content available';
+            document.getElementById('policyContent').innerHTML = formatContent(content);
+            
+            // Format dates
+            if (policy.createdAt) {
+                document.getElementById('createdAt').textContent = new Date(policy.createdAt).toLocaleString();
+            }
+            if (policy.updatedAt) {
+                document.getElementById('updatedAt').textContent = new Date(policy.updatedAt).toLocaleString();
+            }
+
+            // Store policy ID for edit button
+            document.getElementById('editBtn').dataset.policyId = id;
+        }
+
+        function formatPolicyType(type) {
+            const types = {
+                'policy': 'Policy',
+                'vision': 'Vision Statement',
+                'code': 'Code of Conduct',
+                'meeting': 'Board Meeting'
+            };
+            return types[type] || type;
+        }
+
+        function formatContent(content) {
+            // Convert newlines to <br> and preserve formatting
+            return content
+                .replace(/\n/g, '<br>')
+                .replace(/\r\n/g, '<br>');
+        }
+
+        function editPolicy() {
+            const policyId = document.getElementById('editBtn').dataset.policyId;
+            if (policyId) {
+                window.location.href = `policy-form.html?id=${policyId}`;
+            }
+        }
+    </script>
+</body>
+</html>
+

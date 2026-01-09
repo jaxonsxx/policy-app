@@ -171,6 +171,9 @@ function initializePage() {
         case 'bylaw-form':
             initBylawForm();
             break;
+        case 'approvals':
+            // Approvals page has its own initialization in the HTML
+            break;
         case 'suggestions-manage':
             initSuggestionsPage();
             break;
@@ -187,10 +190,13 @@ function getCurrentPage() {
     
     if (filename.includes('login')) return 'login';
     if (filename.includes('dashboard')) return 'dashboard';
+    if (filename.includes('policy-view')) return 'policy-view';
     if (filename.includes('policy-form')) return 'policy-form';
     if (filename.includes('policies')) return 'policies';
+    if (filename.includes('bylaw-view')) return 'bylaw-view';
     if (filename.includes('bylaw-form')) return 'bylaw-form';
     if (filename.includes('bylaw')) return 'bylaw';
+    if (filename.includes('approvals')) return 'approvals';
     if (filename.includes('suggestions')) return 'suggestions-manage';
     
     return 'dashboard';
@@ -369,13 +375,7 @@ function toggleSection(section) {
 }
 
 function viewPolicy(id) {
-    const policies = getPolicies();
-    const policy = policies.find(p => p.id === id);
-    
-    if (policy) {
-        // Create a view modal or navigate to view page
-        alert(`Policy: ${policy.name || policy.policyName}\n\n${policy.content || policy.policyContent || 'No content'}`);
-    }
+    window.location.href = `policy-view.html?id=${id}`;
 }
 
 function editPolicy(id) {
@@ -529,12 +529,7 @@ function renderBylawItem(bylaw) {
 }
 
 function viewBylaw(id) {
-    const bylaws = getBylaws();
-    const bylaw = bylaws.find(b => b.id === id);
-    
-    if (bylaw) {
-        alert(`Bylaw #${bylaw.number || bylaw.bylawNumber}\n\n${bylaw.title || bylaw.bylawTitle}\n\n${bylaw.content || bylaw.bylawContent}`);
-    }
+    window.location.href = `bylaw-view.html?id=${id}`;
 }
 
 function editBylaw(id) {
@@ -767,25 +762,35 @@ function initSidebarNavigation() {
 // Approval Workflow (for future implementation)
 // ============================================
 
-function approvePolicy(id) {
+function approvePolicy(id, showAlert = true) {
     const policies = getPolicies();
     const index = policies.findIndex(p => p.id === id);
     if (index !== -1) {
         policies[index].status = 'approved';
+        policies[index].approvedAt = new Date().toISOString();
         savePolicies(policies);
-        loadPolicies();
-        alert('Policy approved successfully!');
+        
+        // Only reload and show alert if not called from approvals page
+        if (showAlert) {
+            loadPolicies();
+            alert('Policy approved successfully!');
+        }
     }
 }
 
-function approveBylaw(id) {
+function approveBylaw(id, showAlert = true) {
     const bylaws = getBylaws();
     const index = bylaws.findIndex(b => b.id === id);
     if (index !== -1) {
         bylaws[index].status = 'approved';
+        bylaws[index].approvedAt = new Date().toISOString();
         saveBylaws(bylaws);
-        loadBylaws();
-        alert('Bylaw approved successfully!');
+        
+        // Only reload and show alert if not called from approvals page
+        if (showAlert) {
+            loadBylaws();
+            alert('Bylaw approved successfully!');
+        }
     }
 }
 
