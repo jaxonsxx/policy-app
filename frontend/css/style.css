@@ -126,6 +126,7 @@
     color: #c41e3a;
     font-size: 14px;
     cursor: pointer;
+    font-weight: bold;
 }
 
 /* Main Content */
@@ -268,6 +269,46 @@
     text-align: center;
     padding: 60px 20px;
     color: #999;
+}
+
+/* Contact Page */
+.contact-content {
+    max-width: 800px;
+}
+
+.contact-header {
+    font-size: 48px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 40px;
+}
+
+.contact-section {
+    margin-bottom: 40px;
+}
+
+.contact-section-title {
+    font-size: 32px;
+    font-weight: 520;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.contact-text {
+    font-size: 20px;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 8px;
+}
+
+.contact-text-link {
+    color: #333;
+    text-decoration: none;
+}
+
+.contacttext-link:hover {
+    color: #c41e3a;
+    text-decoration: underline;
 }
 
 @media (max-width: 768px) {
