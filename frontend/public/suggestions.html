@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ASA - Active Policies</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+
+    <body>
+        <div class="container">
+            <!-- SIDEBAR -->
+            <div class="sidebar">
+                <div class="logo">ASA</div>
+
+                <a href="policies.html" class="nav-item">
+                    <!--<span class="nav-icon">🚫</span>-->
+                    Active Policies
+                </a>
+
+                <a href="bylaws.html" class="nav-item">
+                   <!--<span class="nav-icon">📋</span>-->
+                    Bylaws
+                </a>
+
+                <a href="suggestions.html" class="nav-item-active">
+                    <!--<span class="nav-icon">💡</span>-->
+                    Student Suggestion
+                </a>
+                
+                <button class="admin-login" onclick="handleAdminLogin()">
+                    Admin Login
+                </button>
+
+                <a href="contact.html" class="contact-link">Contact Us</a>
+
+            </div>
+
+            <!-- MAIN CONTENT -->
+            <div class="main-content">
+                <div class="header">
+                    <div class="search-container">
+                        <!--<span class="search-icon">🔍</span>-->
+                        <input type="text" class="search-input" id="searchInput" placeholder="Search">
+                    </div>
+                </div>
+
+                <div id="sectionsContainer"></div>
+            </div>
+        </div>
+        <script src="app.js"></script>
+    </body>
+</html>
