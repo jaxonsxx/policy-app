@@ -38,6 +38,9 @@
                 <a href="suggestions-manage.html" class="nav-item">
                     <span>Student Suggestion</span>
                 </a>
+                <a href="master-dashboard.html" class="nav-item master-dashboard-link">
+                    <span>Dashboard</span>
+                </a>
             </nav>
         </aside>
 
@@ -70,6 +73,26 @@
                     </div>
                     <div class="policy-view-content">
                         <div id="policyContent"></div>
+                    </div>
+                    <div class="policy-review-section">
+                        <h3>Annual Policy Review</h3>
+                        <p class="review-description">Please review this policy and provide your assessment:</p>
+                        <form id="reviewForm" class="review-form">
+                            <div class="review-options">
+                                <label class="review-option">
+                                    <input type="radio" name="reviewStatus" value="confirm" id="reviewConfirm">
+                                    <span class="radio-label">Confirm</span>
+                                </label>
+                                <label class="review-option">
+                                    <input type="radio" name="reviewStatus" value="needs_work" id="reviewNeedsWork">
+                                    <span class="radio-label">Needs Work</span>
+                                </label>
+                            </div>
+                            <div class="review-actions">
+                                <button type="submit" class="btn btn-primary">Submit Review</button>
+                            </div>
+                            <div id="reviewStatusMessage" class="review-status-message"></div>
+                        </form>
                     </div>
                     <div class="policy-view-footer">
                         <div class="policy-view-dates">
@@ -109,7 +132,8 @@
             // Populate the view
             document.getElementById('policyTitle').textContent = policy.name || policy.policyName || 'Untitled Policy';
             document.getElementById('policyId').textContent = policy.policyId || policy.id;
-            document.getElementById('policySection').textContent = `Section ${policy.section || 'N/A'}`;
+            const sectionName = getSectionName(policy.section || 'N/A');
+            document.getElementById('policySection').textContent = sectionName;
             document.getElementById('policyType').textContent = formatPolicyType(policy.type || policy.policyType || 'policy');
             
             const statusClass = policy.status || 'draft';
@@ -130,6 +154,53 @@
 
             // Store policy ID for edit button
             document.getElementById('editBtn').dataset.policyId = id;
+            
+            // Load existing review if any
+            loadExistingReview(id);
+        }
+        
+        function loadExistingReview(policyId) {
+            const reviews = getReviews();
+            const currentUser = getCurrentUser();
+            const existingReview = reviews.find(r => r.policyId === policyId && r.reviewerId === currentUser);
+            
+            if (existingReview) {
+                if (existingReview.status === 'confirm') {
+                    document.getElementById('reviewConfirm').checked = true;
+                } else if (existingReview.status === 'needs_work') {
+                    document.getElementById('reviewNeedsWork').checked = true;
+                }
+                showReviewMessage('Your review has been submitted.', 'success');
+            }
+        }
+        
+        function getCurrentUser() {
+            let userId = localStorage.getItem('asa_current_user');
+            if (!userId) {
+                userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('asa_current_user', userId);
+            }
+            return userId;
+        }
+        
+        function getReviews() {
+            const stored = localStorage.getItem('asa_policy_reviews');
+            return stored ? JSON.parse(stored) : [];
+        }
+        
+        function saveReviews(reviews) {
+            localStorage.setItem('asa_policy_reviews', JSON.stringify(reviews));
+        }
+        
+        function showReviewMessage(message, type) {
+            const messageEl = document.getElementById('reviewStatusMessage');
+            messageEl.textContent = message;
+            messageEl.className = 'review-status-message ' + type;
+            messageEl.style.display = 'block';
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
         }
 
         function formatPolicyType(type) {
@@ -148,6 +219,15 @@
                 .replace(/\n/g, '<br>')
                 .replace(/\r\n/g, '<br>');
         }
+        
+        function getSectionName(section) {
+            const sectionNames = {
+                '1': 'Organizational Identity & Values',
+                '2': 'Governance & Elections',
+                '3': 'Operations, Staff & Finance'
+            };
+            return sectionNames[section] || `Section ${section}`;
+        }
 
         function editPolicy() {
             const policyId = document.getElementById('editBtn').dataset.policyId;
@@ -155,6 +235,42 @@
                 window.location.href = `policy-form.html?id=${policyId}`;
             }
         }
+        
+        // Handle review form submission
+        document.getElementById('reviewForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const policyId = urlParams.get('id');
+            const reviewStatus = document.querySelector('input[name="reviewStatus"]:checked');
+            
+            if (!reviewStatus) {
+                showReviewMessage('Please select a review option.', 'error');
+                return;
+            }
+            
+            const reviews = getReviews();
+            const currentUser = getCurrentUser();
+            
+            // Remove existing review by this user for this policy
+            const filteredReviews = reviews.filter(r => !(r.policyId === policyId && r.reviewerId === currentUser));
+            
+            // Add new review
+            const newReview = {
+                id: 'review_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                policyId: policyId,
+                reviewerId: currentUser,
+                reviewerName: 'Committee Member', // In production, get from user session
+                status: reviewStatus.value,
+                reviewedAt: new Date().toISOString(),
+                year: new Date().getFullYear()
+            };
+            
+            filteredReviews.push(newReview);
+            saveReviews(filteredReviews);
+            
+            showReviewMessage('Review submitted successfully!', 'success');
+        });
     </script>
 </body>
 </html>

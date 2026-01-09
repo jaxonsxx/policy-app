@@ -38,6 +38,9 @@
                 <a href="suggestions-manage.html" class="nav-item">
                     <span>Student Suggestion</span>
                 </a>
+                <a href="master-dashboard.html" class="nav-item master-dashboard-link">
+                    <span>Dashboard</span>
+                </a>
             </nav>
         </aside>
 
@@ -145,7 +148,7 @@
                             <h3 class="approval-item-title">${title || 'Untitled'}</h3>
                             <div class="approval-item-meta">
                                 <span class="approval-item-id">${id}</span>
-                                ${isPolicy ? `<span class="approval-item-section">Section ${item.section || 'N/A'}</span>` : ''}
+                                ${isPolicy ? `<span class="approval-item-section">${getSectionName(item.section || 'N/A')}</span>` : ''}
                                 <span class="approval-item-date">Submitted: ${new Date(item.createdAt || item.updatedAt).toLocaleDateString()}</span>
                             </div>
                         </div>
@@ -238,6 +241,15 @@
                 const text = item.textContent.toLowerCase();
                 item.style.display = text.includes(query) ? 'block' : 'none';
             });
+        }
+
+        function getSectionName(section) {
+            const sectionNames = {
+                '1': 'Organizational Identity & Values',
+                '2': 'Governance & Elections',
+                '3': 'Operations, Staff & Finance'
+            };
+            return sectionNames[section] || `Section ${section}`;
         }
 
         // Make functions globally accessible

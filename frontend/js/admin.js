@@ -8,7 +8,9 @@ const STORAGE_KEYS = {
     BYLAWS: 'asa_bylaws',
     SUGGESTIONS: 'asa_suggestions',
     ADMIN_USER: 'asa_admin_user',
-    SESSION: 'asa_session'
+    SESSION: 'asa_session',
+    REVIEWS: 'asa_policy_reviews',
+    CURRENT_USER: 'asa_current_user'
 };
 
 // Initialize on page load
@@ -1118,6 +1120,16 @@ function getPolicies() {
     return stored ? JSON.parse(stored) : [];
 }
 
+// Get section name from section number
+function getSectionName(section) {
+    const sectionNames = {
+        '1': 'Organizational Identity & Values',
+        '2': 'Governance & Elections',
+        '3': 'Operations, Staff & Finance'
+    };
+    return sectionNames[section] || `Section ${section}`;
+}
+
 function savePolicies(policies) {
     localStorage.setItem(STORAGE_KEYS.POLICIES, JSON.stringify(policies));
 }
@@ -1144,10 +1156,11 @@ function loadPolicies() {
     
     let html = '';
     for (const [section, sectionPolicies] of Object.entries(grouped)) {
+        const sectionName = getSectionName(section);
         html += `
             <div class="policy-section expanded" data-section="${section}">
                 <div class="policy-section-header" onclick="toggleSection('${section}')">
-                    <span class="policy-section-title">Section ${section}</span>
+                    <span class="policy-section-title">${sectionName}</span>
                     <span class="policy-section-toggle">▼</span>
                 </div>
                 <div class="policy-items">
@@ -1621,6 +1634,16 @@ function approveBylaw(id, showAlert = true) {
     }
 }
 
+// Review functions
+function getReviews() {
+    const stored = localStorage.getItem(STORAGE_KEYS.REVIEWS);
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveReviews(reviews) {
+    localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
+}
+
 // Export functions for global access
 window.viewPolicy = viewPolicy;
 window.editPolicy = editPolicy;
@@ -1633,4 +1656,7 @@ window.markSuggestionViewed = markSuggestionViewed;
 window.deleteSuggestion = deleteSuggestion;
 window.approvePolicy = approvePolicy;
 window.approveBylaw = approveBylaw;
+window.getPolicies = getPolicies;
+window.getReviews = getReviews;
+window.getSectionName = getSectionName;
 
