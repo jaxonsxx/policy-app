@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create/Update Bylaw - ASA Policy App</title>
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body class="admin-page">
+    <header class="admin-header">
+        <div class="header-content">
+            <div class="logo">
+                <img src="../assets/asalogo.png" alt="ASA Logo">
+            </div>
+            <div class="header-actions">
+                <div class="search-bar">
+                    <input type="text" placeholder="Search..." id="searchInput">
+                </div>
+                <div class="user-menu">
+                    <span class="user-icon">👤</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <nav class="sidebar-nav">
+                <a href="policies.html" class="nav-item">
+                    <span>Active Policies</span>
+                </a>
+                <a href="bylaw.html" class="nav-item active">
+                    <span>Bylaws</span>
+                </a>
+                <a href="suggestions-manage.html" class="nav-item">
+                    <span>Student Suggestion</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="admin-main">
+            <div class="page-header">
+                <h1 id="formTitle">Create/Update Bylaw</h1>
+            </div>
+
+            <form id="bylawForm" class="policy-form">
+                <div class="form-group">
+                    <label for="bylawNumber">Bylaw Number</label>
+                    <input type="number" id="bylawNumber" name="bylawNumber" placeholder="e.g., 1" min="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="bylawTitle">Bylaw Title</label>
+                    <input type="text" id="bylawTitle" name="bylawTitle" placeholder="Enter bylaw title" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="bylawContent">Bylaw Content</label>
+                    <textarea id="bylawContent" name="bylawContent" rows="15" placeholder="Enter bylaw content..." required></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Submit for Approval</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.location.href='bylaw.html'">Cancel</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script src="../js/admin.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,804 @@
+// ============================================
+// ASA Policy App - Admin Panel JavaScript
+// ============================================
+
+// Storage Keys
+const STORAGE_KEYS = {
+    POLICIES: 'asa_policies',
+    BYLAWS: 'asa_bylaws',
+    SUGGESTIONS: 'asa_suggestions',
+    ADMIN_USER: 'asa_admin_user',
+    SESSION: 'asa_session'
+};
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSampleData();
+    initializePage();
+});
+
+// ============================================
+// Sample Data Initialization (for demo)
+// ============================================
+
+function initializeSampleData() {
+    // Only initialize if storage is empty
+    if (localStorage.getItem(STORAGE_KEYS.POLICIES)) return;
+
+    // Sample policies
+    const samplePolicies = [
+        {
+            id: 'policy_1',
+            policyId: '1.1.1',
+            name: 'Vision Statement',
+            policyName: 'Vision Statement',
+            type: 'vision',
+            policyType: 'vision',
+            section: '1',
+            content: 'Through leadership and responsibility, the Augustana Students\' Association serves, represents, and defends in the best interest of students.',
+            policyContent: 'Through leadership and responsibility, the Augustana Students\' Association serves, represents, and defends in the best interest of students.',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2',
+            policyId: '1.1.2',
+            name: 'Code of Conduct',
+            policyName: 'Code of Conduct',
+            type: 'code',
+            policyType: 'code',
+            section: '1',
+            content: 'All members of the Augustana Students\' Association are expected to conduct themselves in a manner that reflects positively on the organization and its values.',
+            policyContent: 'All members of the Augustana Students\' Association are expected to conduct themselves in a manner that reflects positively on the organization and its values.',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3',
+            policyId: '2.2.1',
+            name: 'Board Meeting Policy',
+            policyName: 'Board Meeting Policy',
+            type: 'meeting',
+            policyType: 'meeting',
+            section: '2',
+            content: 'Board meetings shall be held monthly and are open to all members of the association.',
+            policyContent: 'Board meetings shall be held monthly and are open to all members of the association.',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_4',
+            policyId: '3.01',
+            name: 'Membership',
+            policyName: 'Membership',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '3.01 Membership\ni. all full-time members\nii. all part-time members\niii. honorary members\n\n3.02 Definition of Membership\nFull-time members are students enrolled in a minimum of 9 credit hours. Part-time members are students enrolled in fewer than 9 credit hours.',
+            policyContent: '3.01 Membership\ni. all full-time members\nii. all part-time members\niii. honorary members\n\n3.02 Definition of Membership\nFull-time members are students enrolled in a minimum of 9 credit hours. Part-time members are students enrolled in fewer than 9 credit hours.',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }
+    ];
+
+    // Sample bylaws
+    const sampleBylaws = [
+        {
+            id: 'bylaw_1',
+            number: 1,
+            bylawNumber: 1,
+            title: 'General Provisions',
+            bylawTitle: 'General Provisions',
+            content: 'These bylaws govern the operations and procedures of the Augustana Students\' Association.',
+            bylawContent: 'These bylaws govern the operations and procedures of the Augustana Students\' Association.',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'bylaw_2',
+            number: 2,
+            bylawNumber: 2,
+            title: 'Membership Requirements',
+            bylawTitle: 'Membership Requirements',
+            content: 'All students enrolled at Augustana University are automatically members of the association.',
+            bylawContent: 'All students enrolled at Augustana University are automatically members of the association.',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }
+    ];
+
+    // Sample suggestions
+    const sampleSuggestions = [
+        {
+            id: 'suggestion_1',
+            policyReference: 'Section 1.1.1',
+            content: 'I suggest we add more transparency to the decision-making process.',
+            suggestion: 'I suggest we add more transparency to the decision-making process.',
+            viewed: false,
+            createdAt: new Date(Date.now() - 86400000).toISOString()
+        },
+        {
+            id: 'suggestion_2',
+            policyReference: 'Section 2',
+            content: 'Could we have more frequent town hall meetings?',
+            suggestion: 'Could we have more frequent town hall meetings?',
+            viewed: true,
+            createdAt: new Date(Date.now() - 172800000).toISOString()
+        }
+    ];
+
+    savePolicies(samplePolicies);
+    saveBylaws(sampleBylaws);
+    saveSuggestions(sampleSuggestions);
+}
+
+// ============================================
+// Page Initialization
+// ============================================
+
+function initializePage() {
+    const currentPage = getCurrentPage();
+    
+    // Check authentication for admin pages (except login)
+    if (currentPage !== 'login' && !isAuthenticated()) {
+        redirectToLogin();
+        return;
+    }
+
+    // Initialize page-specific functionality
+    switch(currentPage) {
+        case 'login':
+            initLoginPage();
+            break;
+        case 'dashboard':
+            initDashboard();
+            break;
+        case 'policies':
+            initPoliciesPage();
+            break;
+        case 'policy-form':
+            initPolicyForm();
+            break;
+        case 'bylaw':
+            initBylawsPage();
+            break;
+        case 'bylaw-form':
+            initBylawForm();
+            break;
+        case 'suggestions-manage':
+            initSuggestionsPage();
+            break;
+    }
+
+    // Initialize common functionality
+    initSearch();
+    initSidebarNavigation();
+}
+
+function getCurrentPage() {
+    const path = window.location.pathname;
+    const filename = path.split('/').pop() || 'index.html';
+    
+    if (filename.includes('login')) return 'login';
+    if (filename.includes('dashboard')) return 'dashboard';
+    if (filename.includes('policy-form')) return 'policy-form';
+    if (filename.includes('policies')) return 'policies';
+    if (filename.includes('bylaw-form')) return 'bylaw-form';
+    if (filename.includes('bylaw')) return 'bylaw';
+    if (filename.includes('suggestions')) return 'suggestions-manage';
+    
+    return 'dashboard';
+}
+
+// ============================================
+// Authentication
+// ============================================
+
+function isAuthenticated() {
+    const session = localStorage.getItem(STORAGE_KEYS.SESSION);
+    return session === 'true';
+}
+
+function setAuthenticated(value) {
+    localStorage.setItem(STORAGE_KEYS.SESSION, value ? 'true' : 'false');
+}
+
+function redirectToLogin() {
+    window.location.href = 'login.html';
+}
+
+function logout() {
+    setAuthenticated(false);
+    redirectToLogin();
+}
+
+// ============================================
+// Login Page
+// ============================================
+
+function initLoginPage() {
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    // For demo purposes, allow any email/password
+    // In production, this would connect to a backend API
+}
+
+function handleLogin(e) {
+    e.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    // Simple validation
+    if (!email || !password) {
+        alert('Please enter both email and password');
+        return;
+    }
+
+    // Demo authentication - accept any credentials
+    // In production, validate against backend
+    setAuthenticated(true);
+    window.location.href = 'dashboard.html';
+}
+
+// ============================================
+// Dashboard
+// ============================================
+
+function initDashboard() {
+    updateDashboardStats();
+}
+
+function updateDashboardStats() {
+    const policies = getPolicies();
+    const bylaws = getBylaws();
+    const suggestions = getSuggestions();
+
+    const pendingPolicies = policies.filter(p => p.status === 'pending').length;
+    const newSuggestions = suggestions.filter(s => !s.viewed).length;
+
+    document.getElementById('totalPolicies').textContent = policies.length;
+    document.getElementById('pendingApproval').textContent = pendingPolicies;
+    document.getElementById('totalBylaws').textContent = bylaws.length;
+    document.getElementById('newSuggestions').textContent = newSuggestions;
+}
+
+// ============================================
+// Policies Management
+// ============================================
+
+function initPoliciesPage() {
+    loadPolicies();
+}
+
+function getPolicies() {
+    const stored = localStorage.getItem(STORAGE_KEYS.POLICIES);
+    return stored ? JSON.parse(stored) : [];
+}
+
+function savePolicies(policies) {
+    localStorage.setItem(STORAGE_KEYS.POLICIES, JSON.stringify(policies));
+}
+
+function loadPolicies() {
+    const policies = getPolicies();
+    const container = document.getElementById('policiesList');
+    
+    if (!container) return;
+
+    if (policies.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📄</div>
+                <div class="empty-state-text">No policies found</div>
+                <div class="empty-state-subtext">Create your first policy to get started</div>
+            </div>
+        `;
+        return;
+    }
+
+    // Group policies by section
+    const grouped = groupPoliciesBySection(policies);
+    
+    let html = '';
+    for (const [section, sectionPolicies] of Object.entries(grouped)) {
+        html += `
+            <div class="policy-section expanded" data-section="${section}">
+                <div class="policy-section-header" onclick="toggleSection('${section}')">
+                    <span class="policy-section-title">Section ${section}</span>
+                    <span class="policy-section-toggle">▼</span>
+                </div>
+                <div class="policy-items">
+                    ${sectionPolicies.map(policy => renderPolicyItem(policy)).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
+function groupPoliciesBySection(policies) {
+    const grouped = {};
+    policies.forEach(policy => {
+        const section = policy.section || '1';
+        if (!grouped[section]) {
+            grouped[section] = [];
+        }
+        grouped[section].push(policy);
+    });
+    return grouped;
+}
+
+function renderPolicyItem(policy) {
+    const statusClass = policy.status || 'draft';
+    const statusText = (policy.status || 'draft').charAt(0).toUpperCase() + (policy.status || 'draft').slice(1);
+    
+    return `
+        <div class="policy-item" data-id="${policy.id}">
+            <div class="policy-item-header">
+                <div class="policy-item-title">${policy.name || policy.policyName || 'Untitled Policy'}</div>
+                <div class="policy-item-actions">
+                    <button class="action-btn view" onclick="viewPolicy('${policy.id}')" title="View">👁️</button>
+                    <button class="action-btn edit" onclick="editPolicy('${policy.id}')" title="Edit">✏️</button>
+                    <button class="action-btn delete" onclick="deletePolicy('${policy.id}')" title="Delete">🗑️</button>
+                </div>
+            </div>
+            <div class="policy-item-meta">
+                <div>ID: ${policy.policyId || policy.id}</div>
+                <div class="policy-status ${statusClass}">${statusText}</div>
+            </div>
+        </div>
+    `;
+}
+
+function toggleSection(section) {
+    const sectionEl = document.querySelector(`[data-section="${section}"]`);
+    if (sectionEl) {
+        sectionEl.classList.toggle('expanded');
+    }
+}
+
+function viewPolicy(id) {
+    const policies = getPolicies();
+    const policy = policies.find(p => p.id === id);
+    
+    if (policy) {
+        // Create a view modal or navigate to view page
+        alert(`Policy: ${policy.name || policy.policyName}\n\n${policy.content || policy.policyContent || 'No content'}`);
+    }
+}
+
+function editPolicy(id) {
+    window.location.href = `policy-form.html?id=${id}`;
+}
+
+function deletePolicy(id) {
+    if (confirm('Are you sure you want to delete this policy?')) {
+        const policies = getPolicies();
+        const filtered = policies.filter(p => p.id !== id);
+        savePolicies(filtered);
+        loadPolicies();
+    }
+}
+
+// ============================================
+// Policy Form
+// ============================================
+
+function initPolicyForm() {
+    const form = document.getElementById('policyForm');
+    const urlParams = new URLSearchParams(window.location.search);
+    const policyId = urlParams.get('id');
+
+    if (policyId) {
+        loadPolicyForEdit(policyId);
+    }
+
+    if (form) {
+        form.addEventListener('submit', handlePolicySubmit);
+    }
+}
+
+function loadPolicyForEdit(id) {
+    const policies = getPolicies();
+    const policy = policies.find(p => p.id === id);
+    
+    if (policy) {
+        document.getElementById('formTitle').textContent = 'Update Policy';
+        document.getElementById('policyId').value = policy.policyId || '';
+        document.getElementById('policyName').value = policy.name || policy.policyName || '';
+        document.getElementById('policyType').value = policy.type || policy.policyType || '';
+        document.getElementById('section').value = policy.section || '';
+        document.getElementById('policyContent').value = policy.content || policy.policyContent || '';
+        
+        // Store the ID for update
+        document.getElementById('policyForm').dataset.editId = id;
+    }
+}
+
+function handlePolicySubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const editId = form.dataset.editId;
+    
+    const policyData = {
+        id: editId || generateId(),
+        policyId: document.getElementById('policyId').value,
+        name: document.getElementById('policyName').value,
+        policyName: document.getElementById('policyName').value,
+        type: document.getElementById('policyType').value,
+        policyType: document.getElementById('policyType').value,
+        section: document.getElementById('section').value,
+        content: document.getElementById('policyContent').value,
+        policyContent: document.getElementById('policyContent').value,
+        status: 'pending',
+        createdAt: editId ? getPolicies().find(p => p.id === editId)?.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    const policies = getPolicies();
+    
+    if (editId) {
+        // Update existing
+        const index = policies.findIndex(p => p.id === editId);
+        if (index !== -1) {
+            policies[index] = { ...policies[index], ...policyData };
+        }
+    } else {
+        // Create new
+        policies.push(policyData);
+    }
+    
+    savePolicies(policies);
+    alert('Policy submitted for approval successfully!');
+    window.location.href = 'policies.html';
+}
+
+function generateId() {
+    return 'policy_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// ============================================
+// Bylaws Management
+// ============================================
+
+function initBylawsPage() {
+    loadBylaws();
+}
+
+function getBylaws() {
+    const stored = localStorage.getItem(STORAGE_KEYS.BYLAWS);
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveBylaws(bylaws) {
+    localStorage.setItem(STORAGE_KEYS.BYLAWS, JSON.stringify(bylaws));
+}
+
+function loadBylaws() {
+    const bylaws = getBylaws();
+    const container = document.getElementById('bylawsList');
+    
+    if (!container) return;
+
+    if (bylaws.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-text">No bylaws found</div>
+                <div class="empty-state-subtext">Create your first bylaw to get started</div>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort by number
+    const sorted = [...bylaws].sort((a, b) => (a.number || 0) - (b.number || 0));
+    
+    container.innerHTML = sorted.map(bylaw => renderBylawItem(bylaw)).join('');
+}
+
+function renderBylawItem(bylaw) {
+    return `
+        <div class="bylaw-item" data-id="${bylaw.id}">
+            <div class="bylaw-item-header">
+                <div class="bylaw-item-title">Bylaw #${bylaw.number || bylaw.bylawNumber || 'N/A'}</div>
+                <div class="bylaw-item-actions">
+                    <button class="action-btn view" onclick="viewBylaw('${bylaw.id}')" title="View">👁️</button>
+                    <button class="action-btn edit" onclick="editBylaw('${bylaw.id}')" title="Edit">✏️</button>
+                    <button class="action-btn delete" onclick="deleteBylaw('${bylaw.id}')" title="Delete">🗑️</button>
+                </div>
+            </div>
+            <div class="bylaw-item-content">
+                <strong>${bylaw.title || bylaw.bylawTitle || 'Untitled Bylaw'}</strong>
+                <p>${(bylaw.content || bylaw.bylawContent || '').substring(0, 150)}...</p>
+            </div>
+        </div>
+    `;
+}
+
+function viewBylaw(id) {
+    const bylaws = getBylaws();
+    const bylaw = bylaws.find(b => b.id === id);
+    
+    if (bylaw) {
+        alert(`Bylaw #${bylaw.number || bylaw.bylawNumber}\n\n${bylaw.title || bylaw.bylawTitle}\n\n${bylaw.content || bylaw.bylawContent}`);
+    }
+}
+
+function editBylaw(id) {
+    window.location.href = `bylaw-form.html?id=${id}`;
+}
+
+function deleteBylaw(id) {
+    if (confirm('Are you sure you want to delete this bylaw?')) {
+        const bylaws = getBylaws();
+        const filtered = bylaws.filter(b => b.id !== id);
+        saveBylaws(filtered);
+        loadBylaws();
+    }
+}
+
+// ============================================
+// Bylaw Form
+// ============================================
+
+function initBylawForm() {
+    const form = document.getElementById('bylawForm');
+    const urlParams = new URLSearchParams(window.location.search);
+    const bylawId = urlParams.get('id');
+
+    if (bylawId) {
+        loadBylawForEdit(bylawId);
+    }
+
+    if (form) {
+        form.addEventListener('submit', handleBylawSubmit);
+    }
+}
+
+function loadBylawForEdit(id) {
+    const bylaws = getBylaws();
+    const bylaw = bylaws.find(b => b.id === id);
+    
+    if (bylaw) {
+        document.getElementById('formTitle').textContent = 'Update Bylaw';
+        document.getElementById('bylawNumber').value = bylaw.number || bylaw.bylawNumber || '';
+        document.getElementById('bylawTitle').value = bylaw.title || bylaw.bylawTitle || '';
+        document.getElementById('bylawContent').value = bylaw.content || bylaw.bylawContent || '';
+        
+        document.getElementById('bylawForm').dataset.editId = id;
+    }
+}
+
+function handleBylawSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const editId = form.dataset.editId;
+    
+    const bylawData = {
+        id: editId || generateBylawId(),
+        number: parseInt(document.getElementById('bylawNumber').value),
+        bylawNumber: parseInt(document.getElementById('bylawNumber').value),
+        title: document.getElementById('bylawTitle').value,
+        bylawTitle: document.getElementById('bylawTitle').value,
+        content: document.getElementById('bylawContent').value,
+        bylawContent: document.getElementById('bylawContent').value,
+        status: 'pending',
+        createdAt: editId ? getBylaws().find(b => b.id === editId)?.createdAt : new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+
+    const bylaws = getBylaws();
+    
+    if (editId) {
+        const index = bylaws.findIndex(b => b.id === editId);
+        if (index !== -1) {
+            bylaws[index] = { ...bylaws[index], ...bylawData };
+        }
+    } else {
+        bylaws.push(bylawData);
+    }
+    
+    saveBylaws(bylaws);
+    alert('Bylaw submitted for approval successfully!');
+    window.location.href = 'bylaw.html';
+}
+
+function generateBylawId() {
+    return 'bylaw_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// ============================================
+// Suggestions Management
+// ============================================
+
+function initSuggestionsPage() {
+    loadSuggestions();
+}
+
+function getSuggestions() {
+    const stored = localStorage.getItem(STORAGE_KEYS.SUGGESTIONS);
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveSuggestions(suggestions) {
+    localStorage.setItem(STORAGE_KEYS.SUGGESTIONS, JSON.stringify(suggestions));
+}
+
+function loadSuggestions() {
+    const suggestions = getSuggestions();
+    const container = document.getElementById('suggestionsList');
+    
+    if (!container) return;
+
+    if (suggestions.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">💡</div>
+                <div class="empty-state-text">No suggestions found</div>
+                <div class="empty-state-subtext">Student suggestions will appear here</div>
+            </div>
+        `;
+        return;
+    }
+
+    // Sort by date (newest first)
+    const sorted = [...suggestions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    container.innerHTML = sorted.map(suggestion => renderSuggestionItem(suggestion)).join('');
+}
+
+function renderSuggestionItem(suggestion) {
+    const date = new Date(suggestion.createdAt).toLocaleDateString();
+    const viewedClass = suggestion.viewed ? '' : 'new';
+    
+    return `
+        <div class="suggestion-item ${viewedClass}" data-id="${suggestion.id}">
+            <div class="suggestion-header">
+                <div class="suggestion-meta">
+                    <div class="suggestion-policy">Policy: ${suggestion.policyReference || 'General'}</div>
+                    <div class="suggestion-date">${date}</div>
+                </div>
+                <div class="suggestion-actions">
+                    <button class="btn btn-secondary" onclick="markSuggestionViewed('${suggestion.id}')">Mark as Read</button>
+                    <button class="btn btn-secondary" onclick="deleteSuggestion('${suggestion.id}')">Delete</button>
+                </div>
+            </div>
+            <div class="suggestion-content">${suggestion.content || suggestion.suggestion || ''}</div>
+        </div>
+    `;
+}
+
+function markSuggestionViewed(id) {
+    const suggestions = getSuggestions();
+    const index = suggestions.findIndex(s => s.id === id);
+    if (index !== -1) {
+        suggestions[index].viewed = true;
+        saveSuggestions(suggestions);
+        loadSuggestions();
+    }
+}
+
+function deleteSuggestion(id) {
+    if (confirm('Are you sure you want to delete this suggestion?')) {
+        const suggestions = getSuggestions();
+        const filtered = suggestions.filter(s => s.id !== id);
+        saveSuggestions(filtered);
+        loadSuggestions();
+    }
+}
+
+// ============================================
+// Common Functionality
+// ============================================
+
+function initSearch() {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
+    }
+}
+
+function handleSearch(e) {
+    const query = e.target.value.toLowerCase();
+    const currentPage = getCurrentPage();
+    
+    if (currentPage === 'policies') {
+        filterPolicies(query);
+    } else if (currentPage === 'bylaw') {
+        filterBylaws(query);
+    } else if (currentPage === 'suggestions-manage') {
+        filterSuggestions(query);
+    }
+}
+
+function filterPolicies(query) {
+    const items = document.querySelectorAll('.policy-item');
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(query) ? 'block' : 'none';
+    });
+}
+
+function filterBylaws(query) {
+    const items = document.querySelectorAll('.bylaw-item');
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(query) ? 'block' : 'none';
+    });
+}
+
+function filterSuggestions(query) {
+    const items = document.querySelectorAll('.suggestion-item');
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(query) ? 'block' : 'none';
+    });
+}
+
+function initSidebarNavigation() {
+    // Highlight active nav item based on current page
+    const currentPage = getCurrentPage();
+    const navItems = document.querySelectorAll('.nav-item');
+    
+    navItems.forEach(item => {
+        item.classList.remove('active');
+        const href = item.getAttribute('href');
+        if (href && href.includes(currentPage)) {
+            item.classList.add('active');
+        }
+    });
+}
+
+// ============================================
+// Approval Workflow (for future implementation)
+// ============================================
+
+function approvePolicy(id) {
+    const policies = getPolicies();
+    const index = policies.findIndex(p => p.id === id);
+    if (index !== -1) {
+        policies[index].status = 'approved';
+        savePolicies(policies);
+        loadPolicies();
+        alert('Policy approved successfully!');
+    }
+}
+
+function approveBylaw(id) {
+    const bylaws = getBylaws();
+    const index = bylaws.findIndex(b => b.id === id);
+    if (index !== -1) {
+        bylaws[index].status = 'approved';
+        saveBylaws(bylaws);
+        loadBylaws();
+        alert('Bylaw approved successfully!');
+    }
+}
+
+// Export functions for global access
+window.viewPolicy = viewPolicy;
+window.editPolicy = editPolicy;
+window.deletePolicy = deletePolicy;
+window.toggleSection = toggleSection;
+window.viewBylaw = viewBylaw;
+window.editBylaw = editBylaw;
+window.deleteBylaw = deleteBylaw;
+window.markSuggestionViewed = markSuggestionViewed;
+window.deleteSuggestion = deleteSuggestion;
+window.approvePolicy = approvePolicy;
+window.approveBylaw = approveBylaw;
+

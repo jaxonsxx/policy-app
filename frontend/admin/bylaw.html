@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Suggestions - ASA Policy App</title>
+    <title>Manage Bylaws - ASA Policy App</title>
     <link rel="stylesheet" href="../css/admin.css">
 </head>
 <body class="admin-page">
@@ -29,10 +29,10 @@
                 <a href="policies.html" class="nav-item">
                     <span>Active Policies</span>
                 </a>
-                <a href="bylaw.html" class="nav-item">
+                <a href="bylaw.html" class="nav-item active">
                     <span>Bylaws</span>
                 </a>
-                <a href="suggestions-manage.html" class="nav-item active">
+                <a href="suggestions-manage.html" class="nav-item">
                     <span>Student Suggestion</span>
                 </a>
             </nav>
@@ -40,11 +40,12 @@
 
         <main class="admin-main">
             <div class="page-header">
-                <h1>Student Suggestions</h1>
+                <h1>Bylaws</h1>
+                <button class="btn btn-primary" onclick="window.location.href='bylaw-form.html'">+ Create New Bylaw</button>
             </div>
 
-            <div class="suggestions-list" id="suggestionsList">
-                <!-- Suggestions will be dynamically loaded here -->
+            <div class="bylaws-list" id="bylawsList">
+                <!-- Bylaws will be dynamically loaded here -->
             </div>
         </main>
     </div>
