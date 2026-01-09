@@ -133,10 +133,6 @@ function handleCardClick(item) {
     alert(`Clicked on ${item.title}\n${item.subtitle}`);
 }
 
-function handleAdminLogin() {
-    alert('Admin Login clicked\n\nThis would open a login dialog or redirect to an admin page.');
-}
-
 function handleSearch(e) {
     searchTerm = e.target.value;
     
