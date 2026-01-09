@@ -22,13 +22,15 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================
 
 function initializeSampleData() {
-    // Only initialize if storage is empty
-    if (localStorage.getItem(STORAGE_KEYS.POLICIES)) return;
-
-    // Sample policies
+    // Get existing policies or initialize empty array
+    const existingPolicies = getPolicies();
+    const existingPolicyIds = new Set(existingPolicies.map(p => p.policyId || p.id));
+    
+    // Sample policies - All ASA Policies
     const samplePolicies = [
+        // Section 1
         {
-            id: 'policy_1',
+            id: 'policy_1_1_1',
             policyId: '1.1.1',
             name: 'Vision Statement',
             policyName: 'Vision Statement',
@@ -42,43 +44,829 @@ function initializeSampleData() {
             updatedAt: new Date().toISOString()
         },
         {
-            id: 'policy_2',
+            id: 'policy_1_1_2',
             policyId: '1.1.2',
+            name: 'Mission Statement',
+            policyName: 'Mission Statement',
+            type: 'policy',
+            policyType: 'policy',
+            section: '1',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_1_1_3',
+            policyId: '1.1.3',
             name: 'Code of Conduct',
             policyName: 'Code of Conduct',
             type: 'code',
             policyType: 'code',
             section: '1',
-            content: 'All members of the Augustana Students\' Association are expected to conduct themselves in a manner that reflects positively on the organization and its values.',
-            policyContent: 'All members of the Augustana Students\' Association are expected to conduct themselves in a manner that reflects positively on the organization and its values.',
+            content: '',
+            policyContent: '',
             status: 'approved',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         },
+        // Section 2
         {
-            id: 'policy_3',
-            policyId: '2.2.1',
-            name: 'Board Meeting Policy',
-            policyName: 'Board Meeting Policy',
-            type: 'meeting',
-            policyType: 'meeting',
+            id: 'policy_2_1_0',
+            policyId: '2.1.0',
+            name: 'Policy Making',
+            policyName: 'Policy Making',
+            type: 'policy',
+            policyType: 'policy',
             section: '2',
-            content: 'Board meetings shall be held monthly and are open to all members of the association.',
-            policyContent: 'Board meetings shall be held monthly and are open to all members of the association.',
+            content: '',
+            policyContent: '',
             status: 'approved',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         },
         {
-            id: 'policy_4',
-            policyId: '3.01',
+            id: 'policy_2_2_1',
+            policyId: '2.2.1',
+            name: 'Type of Board',
+            policyName: 'Type of Board',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_2_2',
+            policyId: '2.2.2',
+            name: 'Board Structure',
+            policyName: 'Board Structure',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_1',
+            policyId: '2.3.1',
+            name: 'Proxy Voting',
+            policyName: 'Proxy Voting',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_2',
+            policyId: '2.3.2',
+            name: 'Board Committees',
+            policyName: 'Board Committees',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_3',
+            policyId: '2.3.3',
+            name: 'Officers',
+            policyName: 'Officers',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_4',
+            policyId: '2.3.4',
+            name: 'Executive Members',
+            policyName: 'Executive Members',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_5',
+            policyId: '2.3.5',
             name: 'Membership',
             policyName: 'Membership',
             type: 'policy',
             policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_6',
+            policyId: '2.3.6',
+            name: 'Council Member Job Description',
+            policyName: 'Council Member Job Description',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_7',
+            policyId: '2.3.7',
+            name: 'External Representation',
+            policyName: 'External Representation',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_8',
+            policyId: '2.3.8',
+            name: 'Faculty Liaison',
+            policyName: 'Faculty Liaison',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_9',
+            policyId: '2.3.9',
+            name: 'Transition Training',
+            policyName: 'Transition Training',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_10',
+            policyId: '2.3.10',
+            name: 'Annual Evaluations',
+            policyName: 'Annual Evaluations',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_11',
+            policyId: '2.3.11',
+            name: 'Report Requirements',
+            policyName: 'Report Requirements',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_3_12',
+            policyId: '2.3.12',
+            name: 'External Committee Reporting',
+            policyName: 'External Committee Reporting',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_4_1',
+            policyId: '2.4.1',
+            name: 'CoFA Membership',
+            policyName: 'CoFA Membership',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_4_2',
+            policyId: '2.4.2',
+            name: 'External Organizational Membership',
+            policyName: 'External Organizational Membership',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_5_1',
+            policyId: '2.5.1',
+            name: 'General Election Policy',
+            policyName: 'General Election Policy',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_5_2',
+            policyId: '2.5.2',
+            name: 'Candidate Election Guidelines',
+            policyName: 'Candidate Election Guidelines',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_5_3',
+            policyId: '2.5.3',
+            name: 'Candidate Discipline and Dismissal',
+            policyName: 'Candidate Discipline and Dismissal',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_5_4',
+            policyId: '2.5.4',
+            name: 'Plebiscites & Referenda',
+            policyName: 'Plebiscites & Referenda',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_2_5_5',
+            policyId: '2.5.5',
+            name: 'Appointment to ASC',
+            policyName: 'Appointment to ASC',
+            type: 'policy',
+            policyType: 'policy',
+            section: '2',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        // Section 3
+        {
+            id: 'policy_3_1_1',
+            policyId: '3.1.1',
+            name: 'Employee Definitions',
+            policyName: 'Employee Definitions',
+            type: 'policy',
+            policyType: 'policy',
             section: '3',
-            content: '3.01 Membership\ni. all full-time members\nii. all part-time members\niii. honorary members\n\n3.02 Definition of Membership\nFull-time members are students enrolled in a minimum of 9 credit hours. Part-time members are students enrolled in fewer than 9 credit hours.',
-            policyContent: '3.01 Membership\ni. all full-time members\nii. all part-time members\niii. honorary members\n\n3.02 Definition of Membership\nFull-time members are students enrolled in a minimum of 9 credit hours. Part-time members are students enrolled in fewer than 9 credit hours.',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_2',
+            policyId: '3.1.2',
+            name: 'Personnel Administration',
+            policyName: 'Personnel Administration',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_3',
+            policyId: '3.1.3',
+            name: 'Hiring Practices',
+            policyName: 'Hiring Practices',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_4',
+            policyId: '3.1.4',
+            name: 'Recruitment',
+            policyName: 'Recruitment',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_5',
+            policyId: '3.1.5',
+            name: 'Interviewing and Selection',
+            policyName: 'Interviewing and Selection',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_6',
+            policyId: '3.1.6',
+            name: 'Orientation and Training',
+            policyName: 'Orientation and Training',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_7',
+            policyId: '3.1.7',
+            name: 'Probationary Periods',
+            policyName: 'Probationary Periods',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_8',
+            policyId: '3.1.8',
+            name: 'Job Specifications',
+            policyName: 'Job Specifications',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_9',
+            policyId: '3.1.9',
+            name: 'Staff Appraisals',
+            policyName: 'Staff Appraisals',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_10',
+            policyId: '3.1.10',
+            name: 'Discipline & Dismissal',
+            policyName: 'Discipline & Dismissal',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_11',
+            policyId: '3.1.11',
+            name: 'Executive Director Job Description',
+            policyName: 'Executive Director Job Description',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_12',
+            policyId: '3.1.12',
+            name: 'Annual Employees Policy',
+            policyName: 'Annual Employees Policy',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_1_13',
+            policyId: '3.1.13',
+            name: 'Sexual Harassment Policy',
+            policyName: 'Sexual Harassment Policy',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_2_1',
+            policyId: '3.2.1',
+            name: 'Travel and Related Expenses',
+            policyName: 'Travel and Related Expenses',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_2_2',
+            policyId: '3.2.2',
+            name: 'Bursary Payment Schedule',
+            policyName: 'Bursary Payment Schedule',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_2_3',
+            policyId: '3.2.3',
+            name: 'Review Engagement',
+            policyName: 'Review Engagement',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_2_4',
+            policyId: '3.2.4',
+            name: 'Budget',
+            policyName: 'Budget',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_2_5',
+            policyId: '3.2.5',
+            name: 'Faculty Association Membership Fee',
+            policyName: 'Faculty Association Membership Fee',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_2_6',
+            policyId: '3.2.6',
+            name: 'Campus Association Transfer Payments',
+            policyName: 'Campus Association Transfer Payments',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_1',
+            policyId: '3.3.1',
+            name: 'Student Activities Coordinating Committee',
+            policyName: 'Student Activities Coordinating Committee',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_2',
+            policyId: '3.3.2',
+            name: 'Clubs',
+            policyName: 'Clubs',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_3',
+            policyId: '3.3.3',
+            name: 'Granting',
+            policyName: 'Granting',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_4',
+            policyId: '3.3.4',
+            name: 'Dagligtale Newspaper',
+            policyName: 'Dagligtale Newspaper',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_5',
+            policyId: '3.3.5',
+            name: 'ASA Offensive Content Regulations',
+            policyName: 'ASA Offensive Content Regulations',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_7',
+            policyId: '3.3.7',
+            name: 'Branding',
+            policyName: 'Branding',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_8',
+            policyId: '3.3.8',
+            name: 'Awards',
+            policyName: 'Awards',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_10',
+            policyId: '3.3.10',
+            name: 'Students\' Association Retreat',
+            policyName: 'Students\' Association Retreat',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_3_12',
+            policyId: '3.3.12',
+            name: 'Multimedia Screens',
+            policyName: 'Multimedia Screens',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_4_1',
+            policyId: '3.4.1',
+            name: 'Access and Administration',
+            policyName: 'Access and Administration',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_4_2',
+            policyId: '3.4.2',
+            name: 'Rentals',
+            policyName: 'Rentals',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_4_3',
+            policyId: '3.4.3',
+            name: 'Purchasing',
+            policyName: 'Purchasing',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_4_4',
+            policyId: '3.4.4',
+            name: 'Boardroom Booking',
+            policyName: 'Boardroom Booking',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_4_5',
+            policyId: '3.4.5',
+            name: 'Payments',
+            policyName: 'Payments',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_4_6',
+            policyId: '3.4.6',
+            name: 'Equipment Rental',
+            policyName: 'Equipment Rental',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
+            status: 'approved',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        },
+        {
+            id: 'policy_3_4_7',
+            policyId: '3.4.7',
+            name: 'Safe and Responsible Use of Technology',
+            policyName: 'Safe and Responsible Use of Technology',
+            type: 'policy',
+            policyType: 'policy',
+            section: '3',
+            content: '',
+            policyContent: '',
             status: 'approved',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
@@ -133,9 +921,48 @@ function initializeSampleData() {
         }
     ];
 
-    savePolicies(samplePolicies);
-    saveBylaws(sampleBylaws);
-    saveSuggestions(sampleSuggestions);
+    // Merge sample policies with existing ones (only add if policyId doesn't exist)
+    const policiesToAdd = samplePolicies.filter(p => !existingPolicyIds.has(p.policyId));
+    const mergedPolicies = [...existingPolicies, ...policiesToAdd];
+    
+    // Always ensure all standard policies exist - replace if missing or add new ones
+    // This ensures the complete policy list is always available
+    const allPolicyIds = new Set(samplePolicies.map(p => p.policyId));
+    const finalPolicies = [];
+    
+    // Keep existing policies that match standard policyIds, but update them with standard data
+    samplePolicies.forEach(stdPolicy => {
+        const existingIndex = existingPolicies.findIndex(p => p.policyId === stdPolicy.policyId);
+        if (existingIndex !== -1) {
+            // Keep existing but ensure it has all standard fields
+            finalPolicies.push({ ...stdPolicy, ...existingPolicies[existingIndex] });
+        } else {
+            // Add new standard policy
+            finalPolicies.push(stdPolicy);
+        }
+    });
+    
+    // Add any custom policies that don't match standard IDs
+    existingPolicies.forEach(p => {
+        if (!allPolicyIds.has(p.policyId)) {
+            finalPolicies.push(p);
+        }
+    });
+    
+    // Get existing bylaws and suggestions
+    const existingBylaws = getBylaws();
+    const existingSuggestions = getSuggestions();
+    
+    // Always save to ensure all policies are present
+    savePolicies(finalPolicies);
+    
+    // Only initialize bylaws and suggestions if storage is empty
+    if (existingBylaws.length === 0) {
+        saveBylaws(sampleBylaws);
+    }
+    if (existingSuggestions.length === 0) {
+        saveSuggestions(sampleSuggestions);
+    }
 }
 
 // ============================================
