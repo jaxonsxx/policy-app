@@ -2,7 +2,7 @@
 const sections = [
     {
         id: 1,
-        title: "Section 1",
+        title: "Organizational Identity & Values",
         items: [
             { id: "1.1.1", title: "Section 1.1.1", subtitle: "Vision Statement" },
             { id: "1.1.2", title: "Section 1.1.2", subtitle: "Mission Statement" },
@@ -11,7 +11,7 @@ const sections = [
     },
     {
         id: 2,
-        title: "Section 2",
+        title: "Governance & Elections",
         items: [
             { id: "2.1.0", title: "Section 2.1.0", subtitle: "Policy Making" },
             { id: "2.2.1", title: "Section 2.2.1", subtitle: "Type of Board" },
@@ -27,7 +27,7 @@ const sections = [
     },
     {
         id: 3,
-        title: "Section 3",
+        title: "Operations, Staff & Finance",
         items: [
             { id: "3.1.1", title: "Section 3.1.1", subtitle: "Financial Policies" },
             { id: "3.1.2", title: "Section 3.1.2", subtitle: "Budget Allocation" },
@@ -130,7 +130,8 @@ function toggleSection(sectionId) {
 }
 
 function handleCardClick(item) {
-    alert(`Clicked on ${item.title}\n${item.subtitle}`);
+    // Navigate to policy detail page with the item's id as a query parameter
+    window.location.href = `/frontend/public/policy-detail.html?id=${item.id}`;
 }
 
 function handleSearch(e) {
@@ -144,9 +145,107 @@ function handleSearch(e) {
     renderSections();
 }
 
+// Bylaws Data
+const bylaws = [
+    { id: "definitions", title: "Definitions", subtitle: "Definition of Terms" },
+    { id: "bylaw-1", title: "Bylaw #1", subtitle: "Name of the Organization" },
+    { id: "bylaw-2", title: "Bylaw #2", subtitle: "Preparing/Keeping Records" },
+    { id: "bylaw-3", title: "Bylaw #3", subtitle: "Membership" },
+    { id: "bylaw-4", title: "Bylaw #4", subtitle: "General Meetings" },
+    { id: "bylaw-5", title: "Bylaw #5", subtitle: "Student Council" },
+    { id: "bylaw-6", title: "Bylaw #6", subtitle: "Duties of Student Council" },
+    { id: "bylaw-7", title: "Bylaw #7", subtitle: "Elections" },
+    { id: "bylaw-8", title: "Bylaw #8", subtitle: "Referenda" },
+    { id: "bylaw-9", title: "Bylaw #9", subtitle: "Disciplining and Removal" },
+    { id: "bylaw-10", title: "Bylaw #10", subtitle: "Finances" },
+    { id: "bylaw-11", title: "Bylaw #11", subtitle: "Inspection of Records" },
+    { id: "bylaw-12", title: "Bylaw #12", subtitle: "Corporate Seal" },
+    { id: "bylaw-13", title: "Bylaw #13", subtitle: "Boards" },
+    { id: "bylaw-14", title: "Bylaw #14", subtitle: "Clubs and Organizations" }
+];
+
+// Bylaws State
+let bylawSearchTerm = "";
+
+// Render Bylaws
+function renderBylaws() {
+    const container = document.getElementById('bylawsContainer');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    const filteredBylaws = bylaws.filter(bylaw => 
+        bylaw.title.toLowerCase().includes(bylawSearchTerm.toLowerCase()) ||
+        bylaw.subtitle.toLowerCase().includes(bylawSearchTerm.toLowerCase())
+    );
+    
+    if (filteredBylaws.length > 0) {
+        const grid = document.createElement('div');
+        grid.className = 'cards-grid';
+        
+        filteredBylaws.forEach(bylaw => {
+            const card = createBylawCardElement(bylaw);
+            grid.appendChild(card);
+        });
+        
+        container.appendChild(grid);
+    } else {
+        container.innerHTML = '<div class="no-results">No results found</div>';
+    }
+}
+
+function createBylawCardElement(bylaw) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => handleBylawCardClick(bylaw);
+    
+    card.innerHTML = `
+        <div class="card-image"></div>
+        <div class="card-title">${bylaw.title}</div>
+        <div class="card-subtitle">${bylaw.subtitle}</div>
+    `;
+    
+    return card;
+}
+
+function handleBylawCardClick(bylaw) {
+    // Navigate to bylaw detail page with the bylaw's id as a query parameter
+    window.location.href = `/frontend/public/bylaw-detail.html?id=${bylaw.id}`;
+}
+
+function handleBylawSearch(e) {
+    bylawSearchTerm = e.target.value;
+    renderBylaws();
+}
+
 // Initialize
-document.getElementById('searchInput').addEventListener('input', handleSearch);
-renderSections();
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    // Check which page we're on
+    const sectionsContainer = document.getElementById('sectionsContainer');
+    const bylawsContainer = document.getElementById('bylawsContainer');
+    
+    if (sectionsContainer) {
+        // Policies page
+        searchInput.addEventListener('input', handleSearch);
+        renderSections();
+    } else if (bylawsContainer) {
+        // Bylaws page
+        searchInput.addEventListener('input', handleBylawSearch);
+        renderBylaws();
+        
+        // Download PDF button handler
+        const downloadBtn = document.querySelector('.download-pdf-btn');
+        if (downloadBtn) {
+            downloadBtn.addEventListener('click', () => {
+                // Handle PDF download
+                console.log('Download PDF clicked');
+                // You can implement PDF download functionality here
+                // window.open('/path/to/bylaws.pdf', '_blank');
+            });
+        }
+    }
+}
 
 // Suggestion Form Handler
 
@@ -188,7 +287,7 @@ document.getElementById('suggestionForm').addEventListener('submit', function(e)
     suggestionText.value = '';
     
     // Optional: You could also create a success message element
-    // showSuccessMessage();
+    showSuccessMessage();
 });
 
 function showSuccessMessage() {

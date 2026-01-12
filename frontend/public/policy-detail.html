@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>ASA - Active Policies</title>
+        <title>Policy Detail - ASA Policy App</title>
         <link rel="stylesheet" href="/frontend/css/style.css">
     </head>
 
@@ -11,7 +11,9 @@
         <div class="container">
             <!-- SIDEBAR -->
             <div class="sidebar">
-                <div class="logo">ASA</div>
+                <div class="logo">
+                    <img src="/frontend/assets/asalogo.png" alt="ASA Logo">
+                </div>
 
                 <a href="policies.html" class="nav-item-active">
                     <!--<span class="nav-icon">🚫</span>-->
@@ -45,9 +47,47 @@
                     </div>
                 </div>
 
-                <div id="contentContainer"></div>
+                <div class="content-wrapper">
+                    <div class="policy-detail-container">
+                        <!-- Main Policy Content -->
+                        <div class="policy-main">
+                            <div class="policy-metadata">
+                                <span class="policy-number">Policy # 1.1.1</span>
+                                <button class="download-pdf-btn">Download PDF</button>
+                            </div>
+
+                            <div class="policy-updated">Last Updated: Nov 25, 2008</div>
+
+                            <h1 class="policy-title">Vision Statement</h1>
+
+                            <div class="policy-content">
+                                <p>Through leadership and responsibility, the Augustana Students' Association serves, represents, and defends in the best interest of students.</p>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar - Other Policies -->
+                        <div class="policy-sidebar">
+                            <h3 class="sidebar-title">Other Policies</h3>
+
+                            <div class="sidebar-section">
+                                <a href="#" class="sidebar-link">1.1.2 Mission Statement</a>
+                                <a href="#" class="sidebar-link">1.1.3 Code of Conduct</a>
+                            </div>
+
+                            <div class="sidebar-section">
+                                <h4 class="sidebar-section-title">Section 2</h4>
+                                <a href="#" class="sidebar-link-small">2.1.0 Policy Making</a>
+                                <a href="#" class="sidebar-link-small">2.2.1 Type of Board</a>
+                                <a href="#" class="sidebar-link-small">2.2.2 Board Structure</a>
+                                <a href="#" class="sidebar-link-small">2.3.1 Proxy Voting</a>
+                                <a href="#" class="sidebar-link-small">2.3.2 Board Committees</a>
+                                <a href="#" class="sidebar-link-small">2.3.3 Officers</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-        <script src="app.js"></script>
+        <script src="/frontend/js/app.js"></script>
     </body>
 </html>

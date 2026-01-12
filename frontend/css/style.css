@@ -10,12 +10,6 @@ body {
     color: #333;
 }
 
-/*.body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background-color: #f5f5f5;
-    color: #333;
-}*/
-
 .container {
     display: flex;
     min-height: 100vh;
@@ -86,17 +80,6 @@ body {
 }
 
 .admin-login {
-    /*background-color: #c41e3a;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    width: 100%;
-    margin-top: 20px;
-    transition: background-color 0.2s;*/
     position: absolute;
     bottom: 20px;
     left: 110px;
@@ -148,11 +131,11 @@ body {
 
 /* Header */
 .header {
+    position: sticky;
     background-color: white;
     padding: 20px 40px;
     margin: -20px -40px 30px -40px;
     border-bottom: 1px solid white/*#e0e0e0*/;
-    position: sticky;
 }
 
 .search-container {
@@ -180,6 +163,43 @@ body {
 
 .search-input:focus {
     border-color: #c41e3a;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+    padding: 0;
+}
+
+/* Page Header with Button */
+.page-header-with-button {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding: 0 24px;
+}
+
+.page-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.download-pdf-btn {
+    background-color: #c41e3a;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.download-pdf-btn:hover {
+    background-color: #a0182f;
 }
 
 /* Section */
@@ -315,9 +335,10 @@ body {
     text-decoration: none;
 }
 
-.contacttext-link:hover {
+.contact-text-link:hover {
     color: #c41e3a;
     text-decoration: underline;
+    transition: .15s;
 }
 
 /* Suggestions Page*/
@@ -446,6 +467,150 @@ body {
     display: block;
 }
 
+/* Policy Detail Page */
+.policy-detail-container {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 30px;
+    padding: 0 24px;
+}
+
+.policy-main {
+    background-color: white;
+    border-radius: 8px;
+    padding: 40px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.policy-metadata {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.policy-number {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+}
+
+.policy-updated {
+    font-size: 14px;
+    color: #999;
+    margin-bottom: 30px;
+}
+
+.policy-title {
+    font-size: 48px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 40px;
+    line-height: 1.2;
+}
+
+.policy-content {
+    font-size: 20px;
+    line-height: 1.8;
+    color: #555;
+}
+
+.policy-content p {
+    margin-bottom: 20px;
+}
+
+/* Policy Sidebar */
+.policy-sidebar {
+    background-color: white;
+    border-radius: 8px;
+    padding: 30px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    height: fit-content;
+}
+
+.sidebar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #c41e3a;
+    margin-bottom: 20px;
+}
+
+.sidebar-section {
+    margin-bottom: 25px;
+}
+
+.sidebar-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12px;
+}
+
+.sidebar-link {
+    display: block;
+    padding: 10px 0;
+    font-size: 15px;
+    color: #333;
+    text-decoration: underline;
+    transition: color 0.2s;
+    line-height: 1.5;
+}
+
+.sidebar-link:hover {
+    color: #c41e3a;
+}
+
+.sidebar-link-small {
+    display: block;
+    padding: 8px 0;
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+    transition: color 0.2s;
+    line-height: 1.5;
+}
+
+.sidebar-link-small:hover {
+    color: #c41e3a;
+}
+
+/* Bylaw Detail Page Specific Styles */
+.bylaw-section {
+    margin-bottom: 40px;
+}
+
+.bylaw-section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 16px;
+}
+
+.bylaw-list {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    line-height: 1.8;
+}
+
+.bylaw-list li {
+    margin-bottom: 12px;
+    color: #555;
+    font-size: 20px;
+}
+
+.bylaw-list ul,
+.bylaw-list ol {
+    margin-top: 12px;
+    margin-left: 20px;
+}
+
+.policy-content .bylaw-section p {
+    font-size: 20px;
+    line-height: 1.8;
+    color: #555;
+    margin-bottom: 16px;
+}
+
 @media (max-width: 768px) {
     .sidebar {
         width: 200px;
@@ -488,5 +653,63 @@ body {
 
     .submit-btn {
         width: 100%;
+    }
+
+    .policy-detail-container {
+        grid-template-columns: 1fr;
+        padding: 0 15px;
+    }
+
+    .policy-sidebar {
+        order: 2;
+    }
+
+    .container {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+    }
+
+    .section-content,
+    .cards-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .content-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .policy-main {
+        padding: 25px;
+    }
+
+    .policy-title {
+        font-size: 32px;
+    }
+
+    .policy-content {
+        font-size: 18px;
+    }
+
+    .policy-metadata {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .bylaw-section-title {
+        font-size: 18px;
+    }
+
+    .bylaw-list li {
+        font-size: 18px;
+    }
+
+    .policy-content .bylaw-section p {
+        font-size: 18px;
     }
 }
