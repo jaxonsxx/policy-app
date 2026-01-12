@@ -482,6 +482,19 @@ body {
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
+.back-button {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #666;
+    text-decoration: none;
+    font-size: 16px;
+    transition: color 0.2s;
+}
+
+.back-button:hover {
+    color: #c41e3a;
+}
+
 .policy-metadata {
     display: flex;
     justify-content: space-between;
