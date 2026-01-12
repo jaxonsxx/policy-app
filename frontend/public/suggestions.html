@@ -11,7 +11,9 @@
         <div class="container">
             <!-- SIDEBAR -->
             <div class="sidebar">
-                <div class="logo">ASA</div>
+                <div class="logo">
+                    <img src="/frontend/assets/asalogo.png" alt="ASA Logo">
+                </div>
 
                 <a href="policies.html" class="nav-item">
                     <!--<span class="nav-icon">🚫</span>-->
@@ -45,9 +47,41 @@
                     </div>
                 </div>
 
-                <div id="contentContainer">Suggestion box with prompt will go here</div>
+                <div class="suggestion-content">
+                    <h1 class="suggestion-heading">Send us your suggestions</h1>
+    
+                    <form id="suggestionForm" class="suggestion-form">
+                        <div class="form-group">
+                            <label for="policySelect" class="form-label">Select a policy to refer to</label>
+                            <select id="policySelect" class="form-select">
+                                <option value="">Select</option>
+                                <option value="1.1.1">Section 1.1.1 - Vision Statement</option>
+                                <option value="1.1.2">Section 1.1.2 - Mission Statement</option>
+                                <option value="1.1.3">Section 1.1.3 - Code of Conduct</option>
+                                <option value="2.1.0">Section 2.1.0 - Policy Making</option>
+                                <option value="2.2.1">Section 2.2.1 - Type of Board</option>
+                                <option value="2.2.2">Section 2.2.2 - Board Structure</option>
+                                <option value="2.3.1">Section 2.3.1 - Proxy Voting</option>
+                                <option value="2.3.2">Section 2.3.2 - Board Committees</option>
+                                <option value="3.1.1">Section 3.1.1 - Financial Policies</option>
+                                <option value="3.1.2">Section 3.1.2 - Budget Allocation</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+    
+                        <div class="form-group">
+                            <label for="suggestionText" class="form-label">Got suggestions? We'd love to hear them</label>
+                            <textarea id="suggestionText" class="form-textarea" rows="10" placeholder="Enter your suggestion here..."></textarea>
+                        </div>
+    
+                        <div class="form-actions">
+                            <button type="submit" class="submit-btn">Submit</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
+
         <script src="/frontend/js/app.js"></script>
     </body>
 </html>

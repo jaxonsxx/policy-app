@@ -147,3 +147,66 @@ function handleSearch(e) {
 // Initialize
 document.getElementById('searchInput').addEventListener('input', handleSearch);
 renderSections();
+
+// Suggestion Form Handler
+
+document.getElementById('suggestionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const policySelect = document.getElementById('policySelect');
+    const suggestionText = document.getElementById('suggestionText');
+    
+    const selectedPolicy = policySelect.value;
+    const suggestion = suggestionText.value.trim();
+    
+    // Validation
+    if (!selectedPolicy) {
+        alert('Please select a policy to refer to.');
+        policySelect.focus();
+        return;
+    }
+    
+    if (!suggestion) {
+        alert('Please enter your suggestion.');
+        suggestionText.focus();
+        return;
+    }
+    
+    // Here you would normally send the data to a server
+    // For now, we'll just show a success message
+    console.log('Suggestion submitted:', {
+        policy: selectedPolicy,
+        suggestion: suggestion,
+        timestamp: new Date().toISOString()
+    });
+    
+    // Show success message
+    alert('Thank you for your suggestion!\n\nYour feedback has been submitted successfully.');
+    
+    // Reset form
+    policySelect.value = '';
+    suggestionText.value = '';
+    
+    // Optional: You could also create a success message element
+    // showSuccessMessage();
+});
+
+function showSuccessMessage() {
+    // Create success message if it doesn't exist
+    let successMsg = document.querySelector('.success-message');
+    if (!successMsg) {
+        successMsg = document.createElement('div');
+        successMsg.className = 'success-message';
+        successMsg.textContent = 'Thank you for your suggestion! Your feedback has been submitted successfully.';
+        
+        const form = document.getElementById('suggestionForm');
+        form.parentNode.insertBefore(successMsg, form);
+    }
+    
+    successMsg.classList.add('show');
+    
+    // Hide after 5 seconds
+    setTimeout(() => {
+        successMsg.classList.remove('show');
+    }, 5000);
+}
