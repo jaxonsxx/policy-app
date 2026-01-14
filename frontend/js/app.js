@@ -9,7 +9,11 @@ const STORAGE_KEYS = {
     SUGGESTIONS: 'asa_suggestions'
 };
 
-// Get section name from section number
+/**
+ * Gets the human-readable section name from a section number.
+ * @param {string|number} section - The section number (1, 2, or 3).
+ * @returns {string} The formatted section name, or "Section {number}" if not found.
+ */
 function getSectionName(section) {
     const sectionNames = {
         '1': 'Organizational Identity & Values',
@@ -19,24 +23,37 @@ function getSectionName(section) {
     return sectionNames[section] || `Section ${section}`;
 }
 
-// Data retrieval functions
+/**
+ * Retrieves all policies from localStorage.
+ * @returns {Array<Object>} An array of policy objects, or an empty array if none exist.
+ */
 function getPolicies() {
     const stored = localStorage.getItem(STORAGE_KEYS.POLICIES);
     return stored ? JSON.parse(stored) : [];
 }
 
+/**
+ * Retrieves all bylaws from localStorage.
+ * @returns {Array<Object>} An array of bylaw objects, or an empty array if none exist.
+ */
 function getBylaws() {
     const stored = localStorage.getItem(STORAGE_KEYS.BYLAWS);
     return stored ? JSON.parse(stored) : [];
 }
 
-// Get approved policies only
+/**
+ * Retrieves only approved policies from localStorage.
+ * @returns {Array<Object>} An array of approved policy objects.
+ */
 function getApprovedPolicies() {
     const policies = getPolicies();
     return policies.filter(p => p.status === 'approved');
 }
 
-// Get approved bylaws only
+/**
+ * Retrieves only approved bylaws from localStorage.
+ * @returns {Array<Object>} An array of approved bylaw objects.
+ */
 function getApprovedBylaws() {
     const bylaws = getBylaws();
     return bylaws.filter(b => b.status === 'approved');
@@ -47,7 +64,11 @@ let openSections = [1, 2, 3]; // Start with all sections open
 let searchTerm = "";
 let bylawSearchTerm = "";
 
-// Render functions for Policies
+/**
+ * Renders all policy sections with their cards in the sections container.
+ * Filters policies based on the current search term and groups them by section.
+ * @returns {void}
+ */
 function renderSections() {
     const container = document.getElementById('sectionsContainer');
     if (!container) return;
@@ -100,6 +121,12 @@ function renderSections() {
     }
 }
 
+/**
+ * Creates a DOM element for a policy section with collapsible header and content.
+ * @param {Object} section - The section object containing id, title, and items.
+ * @param {Array<Object>} items - Array of policy items to display in the section.
+ * @returns {HTMLElement} The created section DOM element.
+ */
 function createSectionElement(section, items) {
     const isOpen = openSections.includes(section.id);
     
@@ -137,6 +164,11 @@ function createSectionElement(section, items) {
     return sectionDiv;
 }
 
+/**
+ * Creates a DOM element for a policy card with click handler.
+ * @param {Object} item - The policy item object containing id, name, sectionName, and policyId.
+ * @returns {HTMLElement} The created card DOM element.
+ */
 function createCardElement(item) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -152,7 +184,11 @@ function createCardElement(item) {
     return card;
 }
 
-// Event handlers
+/**
+ * Toggles the open/closed state of a policy section.
+ * @param {number} sectionId - The ID of the section to toggle (1, 2, or 3).
+ * @returns {void}
+ */
 function toggleSection(sectionId) {
     const index = openSections.indexOf(sectionId);
     if (index > -1) {
@@ -163,11 +199,22 @@ function toggleSection(sectionId) {
     renderSections();
 }
 
+/**
+ * Handles click events on policy cards by navigating to the policy detail page.
+ * @param {Object} item - The policy item object containing the id to navigate to.
+ * @returns {void}
+ */
 function handleCardClick(item) {
     // Navigate to policy detail page with the item's id as a query parameter
     window.location.href = `/frontend/public/policy-detail.html?id=${item.id}`;
 }
 
+/**
+ * Handles search input events for filtering policies.
+ * Opens all sections when a search term is entered.
+ * @param {Event} e - The input event object.
+ * @returns {void}
+ */
 function handleSearch(e) {
     searchTerm = e.target.value;
     
@@ -179,7 +226,11 @@ function handleSearch(e) {
     renderSections();
 }
 
-// Render Bylaws
+/**
+ * Renders all bylaw cards in the bylaws container.
+ * Filters bylaws based on the current search term.
+ * @returns {void}
+ */
 function renderBylaws() {
     const container = document.getElementById('bylawsContainer');
     if (!container) return;
@@ -211,6 +262,11 @@ function renderBylaws() {
     }
 }
 
+/**
+ * Creates a DOM element for a bylaw card with click handler.
+ * @param {Object} bylaw - The bylaw object containing id, title/bylawTitle, and number/bylawNumber.
+ * @returns {HTMLElement} The created card DOM element.
+ */
 function createBylawCardElement(bylaw) {
     const card = document.createElement('div');
     card.className = 'card';
@@ -228,17 +284,31 @@ function createBylawCardElement(bylaw) {
     return card;
 }
 
+/**
+ * Handles click events on bylaw cards by navigating to the bylaw detail page.
+ * @param {Object} bylaw - The bylaw object containing the id to navigate to.
+ * @returns {void}
+ */
 function handleBylawCardClick(bylaw) {
     // Navigate to bylaw detail page with the bylaw's id as a query parameter
     window.location.href = `/frontend/public/bylaw-detail.html?id=${bylaw.id}`;
 }
 
+/**
+ * Handles search input events for filtering bylaws.
+ * @param {Event} e - The input event object.
+ * @returns {void}
+ */
 function handleBylawSearch(e) {
     bylawSearchTerm = e.target.value;
     renderBylaws();
 }
 
-// Load policy detail page
+/**
+ * Loads and displays policy detail information on the policy detail page.
+ * Retrieves policy data from localStorage and updates the page content.
+ * @returns {void}
+ */
 function loadPolicyDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const policyId = urlParams.get('id');
@@ -284,7 +354,11 @@ function loadPolicyDetail() {
     updatePolicySidebar(policy);
 }
 
-// Load bylaw detail page
+/**
+ * Loads and displays bylaw detail information on the bylaw detail page.
+ * Retrieves bylaw data from localStorage and updates the page content.
+ * @returns {void}
+ */
 function loadBylawDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const bylawId = urlParams.get('id');
@@ -330,6 +404,12 @@ function loadBylawDetail() {
     updateBylawSidebar(bylaw);
 }
 
+/**
+ * Updates the policy sidebar with links to other approved policies.
+ * Groups policies by section and excludes the current policy.
+ * @param {Object} currentPolicy - The currently displayed policy object.
+ * @returns {void}
+ */
 function updatePolicySidebar(currentPolicy) {
     const sidebar = document.querySelector('.policy-sidebar');
     if (!sidebar) return;
@@ -368,6 +448,12 @@ function updatePolicySidebar(currentPolicy) {
     sidebar.innerHTML = html;
 }
 
+/**
+ * Updates the bylaw sidebar with links to other approved bylaws.
+ * Excludes the current bylaw from the list.
+ * @param {Object} currentBylaw - The currently displayed bylaw object.
+ * @returns {void}
+ */
 function updateBylawSidebar(currentBylaw) {
     const sidebar = document.querySelector('.policy-sidebar');
     if (!sidebar) return;
@@ -391,7 +477,11 @@ function updateBylawSidebar(currentBylaw) {
     sidebar.innerHTML = html;
 }
 
-// Populate suggestions form dropdown
+/**
+ * Populates the suggestions form dropdown with approved policies.
+ * Groups policies by section for better organization.
+ * @returns {void}
+ */
 function populateSuggestionsDropdown() {
     const policySelect = document.getElementById('policySelect');
     if (!policySelect) return;
@@ -533,6 +623,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+/**
+ * Displays a success message after submitting a suggestion.
+ * Creates the message element if it doesn't exist and automatically hides it after 5 seconds.
+ * @returns {void}
+ */
 function showSuccessMessage() {
     // Create success message if it doesn't exist
     let successMsg = document.querySelector('.success-message');
