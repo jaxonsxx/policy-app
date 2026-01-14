@@ -1,3 +1,8 @@
+// Completed by Dominic del Rosario, 
+// Claude AI was used to assist with the functionality of the suggestion box and grid but manually typed in and adjusted by author
+// Originally only displayed grids with information in arrays for demo
+// Victor connected this to the admin pages for prototype 
+
 // ============================================
 // ASA Policy App - Public View JavaScript
 // ============================================
