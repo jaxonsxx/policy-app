@@ -14,7 +14,7 @@ const STORAGE_KEYS = {
     SUGGESTIONS: 'asa_suggestions'
 };
 
-/**
+/** 
  * Gets the human-readable section name from a section number.
  * @param {string|number} section - The section number (1, 2, or 3).
  * @returns {string} The formatted section name, or "Section {number}" if not found.
@@ -127,6 +127,7 @@ function renderSections() {
 }
 
 /**
+ * Completed by Dominic del Rosario, with indirect steps from Claude AI
  * Creates a DOM element for a policy section with collapsible header and content.
  * @param {Object} section - The section object containing id, title, and items.
  * @param {Array<Object>} items - Array of policy items to display in the section.
@@ -170,6 +171,7 @@ function createSectionElement(section, items) {
 }
 
 /**
+ * Completed by Dominic del Rosario, with indirect steps from Claude AI
  * Creates a DOM element for a policy card with click handler.
  * @param {Object} item - The policy item object containing id, name, sectionName, and policyId.
  * @returns {HTMLElement} The created card DOM element.
@@ -190,6 +192,7 @@ function createCardElement(item) {
 }
 
 /**
+ * Completed by Dominic del Rosario,
  * Toggles the open/closed state of a policy section.
  * @param {number} sectionId - The ID of the section to toggle (1, 2, or 3).
  * @returns {void}
@@ -205,6 +208,7 @@ function toggleSection(sectionId) {
 }
 
 /**
+ * Completed by Dominic del Rosario, 
  * Handles click events on policy cards by navigating to the policy detail page.
  * @param {Object} item - The policy item object containing the id to navigate to.
  * @returns {void}
@@ -215,6 +219,7 @@ function handleCardClick(item) {
 }
 
 /**
+ * Completed by Dominic del Rosario, 
  * Handles search input events for filtering policies.
  * Opens all sections when a search term is entered.
  * @param {Event} e - The input event object.
@@ -268,6 +273,7 @@ function renderBylaws() {
 }
 
 /**
+ * Completed by Dominic del Rosario, with indirect steps from Claude AI
  * Creates a DOM element for a bylaw card with click handler.
  * @param {Object} bylaw - The bylaw object containing id, title/bylawTitle, and number/bylawNumber.
  * @returns {HTMLElement} The created card DOM element.
@@ -290,6 +296,7 @@ function createBylawCardElement(bylaw) {
 }
 
 /**
+ * Completed by Dominic del Rosario, 
  * Handles click events on bylaw cards by navigating to the bylaw detail page.
  * @param {Object} bylaw - The bylaw object containing the id to navigate to.
  * @returns {void}
@@ -300,6 +307,7 @@ function handleBylawCardClick(bylaw) {
 }
 
 /**
+ * Completed by Dominic del Rosario, 
  * Handles search input events for filtering bylaws.
  * @param {Event} e - The input event object.
  * @returns {void}
@@ -629,6 +637,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
+ * Completed by Dominic del Rosario, 
  * Displays a success message after submitting a suggestion.
  * Creates the message element if it doesn't exist and automatically hides it after 5 seconds.
  * @returns {void}
