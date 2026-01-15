@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
     BYLAWS: 'asa_bylaws',
     SUGGESTIONS: 'asa_suggestions',
     ADMIN_USER: 'asa_admin_user',
+    ADMIN_MEMBERS: 'asa_admin_members',
     SESSION: 'asa_session',
     REVIEWS: 'asa_policy_reviews',
     CURRENT_USER: 'asa_current_user'
@@ -1052,7 +1053,60 @@ function redirectToLogin() {
 
 function logout() {
     setAuthenticated(false);
+    localStorage.removeItem('asa_current_admin');
     redirectToLogin();
+}
+
+// ============================================
+// Profile Panel
+// ============================================
+
+function toggleProfilePanel() {
+    const panel = document.getElementById('profilePanel');
+    if (panel) {
+        panel.classList.toggle('hidden');
+        if (!panel.classList.contains('hidden')) {
+            loadProfileData();
+        }
+    }
+}
+
+function closeProfilePanel() {
+    const panel = document.getElementById('profilePanel');
+    if (panel) {
+        panel.classList.add('hidden');
+    }
+}
+
+function loadProfileData() {
+    // Get current admin user
+    const currentAdminStr = localStorage.getItem('asa_current_admin');
+    if (!currentAdminStr) {
+        // If no admin session, try to get from email in localStorage or use default
+        console.warn('No current admin found');
+        return;
+    }
+    
+    try {
+        const currentAdmin = JSON.parse(currentAdminStr);
+        
+        // Update profile fields
+        const firstNameEl = document.getElementById('profileFirstName');
+        const lastNameEl = document.getElementById('profileLastName');
+        const emailEl = document.getElementById('profileEmail');
+        
+        if (firstNameEl) firstNameEl.textContent = currentAdmin.firstName || '-';
+        if (lastNameEl) lastNameEl.textContent = currentAdmin.lastName || '-';
+        if (emailEl) emailEl.textContent = currentAdmin.email || '-';
+    } catch (e) {
+        console.error('Error loading profile data:', e);
+    }
+}
+
+function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        logout();
+    }
 }
 
 // ============================================
@@ -1072,7 +1126,7 @@ function initLoginPage() {
 function handleLogin(e) {
     e.preventDefault();
     
-    const email = document.getElementById('email').value;
+    const email = document.getElementById('email').value.trim().toLowerCase();
     const password = document.getElementById('password').value;
 
     // Simple validation
@@ -1081,10 +1135,24 @@ function handleLogin(e) {
         return;
     }
 
-    // Demo authentication - accept any credentials
-    // In production, validate against backend
-    setAuthenticated(true);
-    window.location.href = 'dashboard.html';
+    // Check against admin members list
+    const members = getAdminMembers();
+    const member = members.find(m => m.email.toLowerCase() === email && m.password === password);
+    
+    if (member) {
+        // Valid admin member
+        setAuthenticated(true);
+        localStorage.setItem('asa_current_admin', JSON.stringify(member));
+        window.location.href = 'dashboard.html';
+    } else {
+        // For demo purposes, still allow any credentials if no members are set up yet
+        if (members.length === 0) {
+            setAuthenticated(true);
+            window.location.href = 'dashboard.html';
+        } else {
+            alert('Invalid email or password. Please check your credentials.');
+        }
+    }
 }
 
 // ============================================
@@ -1225,11 +1293,15 @@ function editPolicy(id) {
 }
 
 function deletePolicy(id) {
-    if (confirm('Are you sure you want to delete this policy?')) {
-        const policies = getPolicies();
+    const policies = getPolicies();
+    const policy = policies.find(p => p.id === id);
+    const policyName = policy ? (policy.name || policy.policyName || 'this policy') : 'this policy';
+    
+    if (confirm(`⚠️ WARNING: Are you sure you want to delete "${policyName}"?\n\nThis action cannot be undone. The policy will be permanently removed from the system.`)) {
         const filtered = policies.filter(p => p.id !== id);
         savePolicies(filtered);
         loadPolicies();
+        alert('Policy deleted successfully.');
     }
 }
 
@@ -1378,11 +1450,15 @@ function editBylaw(id) {
 }
 
 function deleteBylaw(id) {
-    if (confirm('Are you sure you want to delete this bylaw?')) {
-        const bylaws = getBylaws();
+    const bylaws = getBylaws();
+    const bylaw = bylaws.find(b => b.id === id);
+    const bylawName = bylaw ? (`Bylaw #${bylaw.number || bylaw.bylawNumber || ''} - ${bylaw.title || bylaw.bylawTitle || 'Untitled'}`) : 'this bylaw';
+    
+    if (confirm(`⚠️ WARNING: Are you sure you want to delete "${bylawName}"?\n\nThis action cannot be undone. The bylaw will be permanently removed from the system.`)) {
         const filtered = bylaws.filter(b => b.id !== id);
         saveBylaws(filtered);
         loadBylaws();
+        alert('Bylaw deleted successfully.');
     }
 }
 
@@ -1529,11 +1605,15 @@ function markSuggestionViewed(id) {
 }
 
 function deleteSuggestion(id) {
-    if (confirm('Are you sure you want to delete this suggestion?')) {
-        const suggestions = getSuggestions();
+    const suggestions = getSuggestions();
+    const suggestion = suggestions.find(s => s.id === id);
+    const suggestionPreview = suggestion ? (suggestion.content || suggestion.suggestion || '').substring(0, 50) : 'this suggestion';
+    
+    if (confirm(`⚠️ WARNING: Are you sure you want to delete this student suggestion?\n\nPreview: "${suggestionPreview}..."\n\nThis action cannot be undone. The suggestion will be permanently removed from the system.`)) {
         const filtered = suggestions.filter(s => s.id !== id);
         saveSuggestions(filtered);
         loadSuggestions();
+        alert('Suggestion deleted successfully.');
     }
 }
 
@@ -1645,6 +1725,76 @@ function saveReviews(reviews) {
     localStorage.setItem(STORAGE_KEYS.REVIEWS, JSON.stringify(reviews));
 }
 
+// ============================================
+// Admin Members Management
+// ============================================
+
+function getAdminMembers() {
+    const stored = localStorage.getItem(STORAGE_KEYS.ADMIN_MEMBERS);
+    return stored ? JSON.parse(stored) : [];
+}
+
+function saveAdminMembers(members) {
+    localStorage.setItem(STORAGE_KEYS.ADMIN_MEMBERS, JSON.stringify(members));
+}
+
+function addAdminMember(memberData) {
+    const members = getAdminMembers();
+    
+    // Check if email already exists
+    if (members.some(m => m.email.toLowerCase() === memberData.email.toLowerCase())) {
+        alert('An admin member with this email already exists.');
+        return false;
+    }
+    
+    const newMember = {
+        id: 'admin_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+        firstName: memberData.firstName,
+        lastName: memberData.lastName,
+        email: memberData.email.toLowerCase(),
+        password: memberData.password,
+        createdAt: new Date().toISOString()
+    };
+    
+    members.push(newMember);
+    saveAdminMembers(members);
+    alert('Admin member added successfully!');
+    return true;
+}
+
+function updateAdminMember(id, memberData) {
+    const members = getAdminMembers();
+    const index = members.findIndex(m => m.id === id);
+    
+    if (index === -1) {
+        alert('Member not found.');
+        return false;
+    }
+    
+    // Check if email already exists for another member
+    const emailExists = members.some(m => 
+        m.id !== id && m.email.toLowerCase() === memberData.email.toLowerCase()
+    );
+    
+    if (emailExists) {
+        alert('An admin member with this email already exists.');
+        return false;
+    }
+    
+    members[index] = {
+        ...members[index],
+        firstName: memberData.firstName,
+        lastName: memberData.lastName,
+        email: memberData.email.toLowerCase(),
+        password: memberData.password,
+        updatedAt: new Date().toISOString()
+    };
+    
+    saveAdminMembers(members);
+    alert('Admin member updated successfully!');
+    return true;
+}
+
 // Export functions for global access
 window.viewPolicy = viewPolicy;
 window.editPolicy = editPolicy;
@@ -1660,4 +1810,11 @@ window.approveBylaw = approveBylaw;
 window.getPolicies = getPolicies;
 window.getReviews = getReviews;
 window.getSectionName = getSectionName;
+window.getAdminMembers = getAdminMembers;
+window.saveAdminMembers = saveAdminMembers;
+window.addAdminMember = addAdminMember;
+window.updateAdminMember = updateAdminMember;
+window.toggleProfilePanel = toggleProfilePanel;
+window.closeProfilePanel = closeProfilePanel;
+window.handleLogout = handleLogout;
 

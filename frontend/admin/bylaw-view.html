@@ -17,8 +17,8 @@
                 <div class="search-bar">
                     <input type="text" placeholder="Search..." id="searchInput">
                 </div>
-                <div class="user-menu">
-                    <span class="user-icon">👤</span>
+                <div class="user-menu" onclick="toggleProfilePanel()">
+                    <span class="user-icon" id="profileIcon">👤</span>
                 </div>
             </div>
         </div>
@@ -144,6 +144,40 @@
                 window.location.href = `bylaw-form.html?id=${bylawId}`;
             }
         }
+    </script>
+    <!-- Profile Side Panel -->
+    <div id="profilePanel" class="profile-panel hidden">
+        <div class="profile-panel-overlay" onclick="closeProfilePanel()"></div>
+        <div class="profile-panel-content">
+            <div class="profile-panel-header">
+                <h2>Profile</h2>
+                <button class="profile-close-btn" onclick="closeProfilePanel()" aria-label="Close profile panel">×</button>
+            </div>
+            <div class="profile-panel-body"><div class="profile-info">
+                    <div class="profile-field">
+                        <label>First Name</label>
+                        <div class="profile-value" id="profileFirstName">-</div>
+                    </div>
+                    <div class="profile-field">
+                        <label>Last Name</label>
+                        <div class="profile-value" id="profileLastName">-</div>
+                    </div>
+                    <div class="profile-field">
+                        <label>Email</label>
+                        <div class="profile-value" id="profileEmail">-</div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn btn-danger btn-block" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProfileData();
+        });
     </script>
 </body>
 </html>
