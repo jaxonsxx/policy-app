@@ -391,6 +391,18 @@ body {
     font-weight: 400;
 }
 
+.form-input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 16px;
+    color: #333;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background-color: white;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
 .form-select {
     width: 100%;
     padding: 14px 16px;
@@ -407,6 +419,18 @@ body {
     background-repeat: no-repeat;
     background-position: right 16px center;
     padding-right: 45px;
+}
+
+.form-input:hover {
+    border-color: #c41e3a;
+}
+
+.form-input:focus {
+    border-color: #c41e3a;
+}
+
+.form-input::placeholder {
+    color: #999;
 }
 
 .form-select:hover {

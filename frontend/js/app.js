@@ -591,11 +591,19 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const policySelect = document.getElementById('policySelect');
             const suggestionText = document.getElementById('suggestionText');
+            const emailInput = document.getElementById('emailInput');
             
             const selectedPolicyId = policySelect.value;
             const suggestion = suggestionText.value.trim();
+            const email = emailInput.value.trim();
             
             // Validation
+            if (!email) {
+                alert('Please enter your UAlberta email address');
+                emailInput.focus();
+                return;
+            }
+            
             if (!selectedPolicyId) {
                 alert('Please select a policy to refer to.');
                 policySelect.focus();
@@ -605,6 +613,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!suggestion) {
                 alert('Please enter your suggestion.');
                 suggestionText.focus();
+                return;
+            }
+
+            if (!emailInput.value.includes('@ualberta.ca')) {
+                alert('Please enter a valid UAlberta email address');
+                emailInput.focus();
                 return;
             }
             
@@ -630,6 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Reset form
             policySelect.value = '';
             suggestionText.value = '';
+            emailInput.value = '';
             
             showSuccessMessage();
         });
