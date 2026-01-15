@@ -1259,7 +1259,6 @@ function loadPolicyForEdit(id) {
         document.getElementById('formTitle').textContent = 'Update Policy';
         document.getElementById('policyId').value = policy.policyId || '';
         document.getElementById('policyName').value = policy.name || policy.policyName || '';
-        document.getElementById('policyType').value = policy.type || policy.policyType || '';
         document.getElementById('section').value = policy.section || '';
         document.getElementById('policyContent').value = policy.content || policy.policyContent || '';
         
@@ -1279,8 +1278,8 @@ function handlePolicySubmit(e) {
         policyId: document.getElementById('policyId').value,
         name: document.getElementById('policyName').value,
         policyName: document.getElementById('policyName').value,
-        type: document.getElementById('policyType').value,
-        policyType: document.getElementById('policyType').value,
+        type: 'policy', // Default type
+        policyType: 'policy', // Default type for backward compatibility
         section: document.getElementById('section').value,
         content: document.getElementById('policyContent').value,
         policyContent: document.getElementById('policyContent').value,
