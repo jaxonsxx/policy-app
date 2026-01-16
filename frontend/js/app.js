@@ -127,7 +127,7 @@ function renderSections() {
 }
 
 /**
- * Completed by Dominic del Rosario, with indirect steps from Claude AI
+ * Completed by Dominic del Rosario, with steps from Claude AI
  * Creates a DOM element for a policy section with collapsible header and content.
  * @param {Object} section - The section object containing id, title, and items.
  * @param {Array<Object>} items - Array of policy items to display in the section.
@@ -171,7 +171,7 @@ function createSectionElement(section, items) {
 }
 
 /**
- * Completed by Dominic del Rosario, with indirect steps from Claude AI
+ * Completed by Dominic del Rosario, with steps from Claude AI
  * Creates a DOM element for a policy card with click handler.
  * @param {Object} item - The policy item object containing id, name, sectionName, and policyId.
  * @returns {HTMLElement} The created card DOM element.
