@@ -215,7 +215,7 @@ function toggleSection(sectionId) {
  */
 function handleCardClick(item) {
     // Navigate to policy detail page with the item's id as a query parameter
-    window.location.href = `/frontend/public/policy-detail.html?id=${item.id}`;
+    window.location.href = `/public/policy-detail.html?id=${item.id}`;
 }
 
 /**
@@ -303,7 +303,7 @@ function createBylawCardElement(bylaw) {
  */
 function handleBylawCardClick(bylaw) {
     // Navigate to bylaw detail page with the bylaw's id as a query parameter
-    window.location.href = `/frontend/public/bylaw-detail.html?id=${bylaw.id}`;
+    window.location.href = `/public/bylaw-detail.html?id=${bylaw.id}`;
 }
 
 /**
@@ -453,7 +453,7 @@ function updatePolicySidebar(currentPolicy) {
         bySection[section].forEach(policy => {
             const name = policy.name || policy.policyName || 'Untitled';
             const policyId = policy.policyId || policy.id;
-            html += `<a href="/frontend/public/policy-detail.html?id=${policy.id}" class="sidebar-link-small">${policyId} - ${name}</a>`;
+            html += `<a href="/public/policy-detail.html?id=${policy.id}" class="sidebar-link-small">${policyId} - ${name}</a>`;
         });
         html += `</div>`;
     });
@@ -483,7 +483,7 @@ function updateBylawSidebar(currentBylaw) {
     otherBylaws.forEach(bylaw => {
         const title = bylaw.title || bylaw.bylawTitle || 'Untitled';
         const number = bylaw.number || bylaw.bylawNumber || '';
-        html += `<a href="/frontend/public/bylaw-detail.html?id=${bylaw.id}" class="sidebar-link">Bylaw #${number} - ${title}</a>`;
+        html += `<a href="/public/bylaw-detail.html?id=${bylaw.id}" class="sidebar-link">Bylaw #${number} - ${title}</a>`;
     });
     html += '</div>';
     
