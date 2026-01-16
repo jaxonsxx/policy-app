@@ -86,7 +86,7 @@ body {
     position: absolute;
     bottom: 20px;
     left: 110px;
-    padding-left: 12px;
+    padding-left: 18px;
     text-decoration:none;
     color: #999;
     font-size: 14px;
@@ -324,6 +324,8 @@ body {
 /* Contact Page */
 .contact-content {
     max-width: 800px;
+    padding: 0 20px;
+
 }
 
 .contact-header {
@@ -366,6 +368,7 @@ body {
 
 .suggestion-content {
     max-width: 900px;
+    padding: 0 20px;
 }
 
 .suggestion-heading {
@@ -464,7 +467,7 @@ body {
     border-color: #c41e3a;
 }
 
-.form-textarea::placeholder {
+.form-textarea:placeholder {
     color: #999;
 }
 
