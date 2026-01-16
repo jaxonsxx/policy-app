@@ -425,6 +425,36 @@ body {
     border: 1px solid var(--border-color);
 }
 
+.profile-input {
+    width: 100%;
+    font-size: 16px;
+    color: var(--text-primary);
+    padding: 12px 16px;
+    background-color: var(--bg-white);
+    border-radius: 6px;
+    border: 2px solid var(--border-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.profile-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #007bff);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.profile-input:hover {
+    border-color: var(--primary-color, #007bff);
+}
+
+.saving-indicator {
+    font-size: 12px;
+    color: #28a745;
+    font-weight: 500;
+    margin-left: 8px;
+    display: inline-block;
+}
+
 .profile-actions {
     margin-top: 24px;
 }

@@ -17,9 +17,13 @@ const STORAGE_KEYS = {
 };
 
 // Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    initializeSampleData();
-    initializePage();
+document.addEventListener('DOMContentLoaded', async function() {
+    // Only initialize sample data if API is not available (fallback)
+    if (typeof asaAPI === 'undefined') {
+        console.warn('API not loaded, using localStorage fallback');
+        initializeSampleData();
+    }
+    await initializePage();
 });
 
 // ============================================
@@ -1078,28 +1082,149 @@ function closeProfilePanel() {
     }
 }
 
-function loadProfileData() {
-    // Get current admin user
-    const currentAdminStr = localStorage.getItem('asa_current_admin');
-    if (!currentAdminStr) {
-        // If no admin session, try to get from email in localStorage or use default
-        console.warn('No current admin found');
-        return;
-    }
-    
+async function loadProfileData() {
     try {
-        const currentAdmin = JSON.parse(currentAdminStr);
+        let currentAdmin = null;
         
-        // Update profile fields
+        // Try to get from API first
+        if (typeof asaAPI !== 'undefined' && asaAPI.isAuthenticated()) {
+            try {
+                const user = await asaAPI.auth.getCurrentUser();
+                if (user) {
+                    // Parse name field if it exists (format: "FirstName LastName" or just stored separately)
+                    const nameParts = user.name ? user.name.split(' ') : [];
+                    currentAdmin = {
+                        id: user.id,
+                        email: user.email,
+                        firstName: user.firstName || nameParts[0] || '',
+                        lastName: user.lastName || nameParts.slice(1).join(' ') || '',
+                        name: user.name || ''
+                    };
+                }
+            } catch (e) {
+                console.warn('Could not fetch user from API, using localStorage:', e);
+            }
+        }
+        
+        // Fallback to localStorage
+        if (!currentAdmin) {
+            const currentAdminStr = localStorage.getItem('asa_current_admin');
+            if (currentAdminStr) {
+                currentAdmin = JSON.parse(currentAdminStr);
+            }
+        }
+        
+        if (!currentAdmin) {
+            console.warn('No current admin found');
+            return;
+        }
+        
+        // Update profile fields - make firstName and lastName editable
         const firstNameEl = document.getElementById('profileFirstName');
         const lastNameEl = document.getElementById('profileLastName');
         const emailEl = document.getElementById('profileEmail');
         
-        if (firstNameEl) firstNameEl.textContent = currentAdmin.firstName || '-';
-        if (lastNameEl) lastNameEl.textContent = currentAdmin.lastName || '-';
-        if (emailEl) emailEl.textContent = currentAdmin.email || '-';
+        // Convert firstName and lastName to editable inputs
+        if (firstNameEl && !firstNameEl.querySelector('input')) {
+            const firstNameValue = currentAdmin.firstName || '';
+            firstNameEl.innerHTML = `<input type="text" class="profile-input" id="profileFirstNameInput" value="${firstNameValue}" placeholder="Enter first name">`;
+            setupProfileInput('profileFirstNameInput', 'firstName');
+        }
+        
+        if (lastNameEl && !lastNameEl.querySelector('input')) {
+            const lastNameValue = currentAdmin.lastName || '';
+            lastNameEl.innerHTML = `<input type="text" class="profile-input" id="profileLastNameInput" value="${lastNameValue}" placeholder="Enter last name">`;
+            setupProfileInput('profileLastNameInput', 'lastName');
+        }
+        
+        if (emailEl) {
+            emailEl.textContent = currentAdmin.email || '-';
+        }
+        
+        // Update stored admin data
+        localStorage.setItem('asa_current_admin', JSON.stringify(currentAdmin));
     } catch (e) {
         console.error('Error loading profile data:', e);
+    }
+}
+
+// Setup auto-save for profile input fields
+function setupProfileInput(inputId, fieldName) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    let saveTimeout = null;
+    
+    input.addEventListener('input', function() {
+        // Clear previous timeout
+        if (saveTimeout) {
+            clearTimeout(saveTimeout);
+        }
+        
+        // Show saving indicator
+        const savingIndicator = input.parentElement.querySelector('.saving-indicator');
+        if (savingIndicator) {
+            savingIndicator.textContent = 'Saving...';
+            savingIndicator.style.display = 'inline';
+        }
+        
+        // Auto-save after 1 second of no typing
+        saveTimeout = setTimeout(async () => {
+            await saveProfileField(fieldName, input.value);
+            
+            // Update saving indicator
+            const savingIndicator = input.parentElement.querySelector('.saving-indicator');
+            if (savingIndicator) {
+                savingIndicator.textContent = 'Saved ✓';
+                savingIndicator.style.display = 'inline';
+                setTimeout(() => {
+                    savingIndicator.style.display = 'none';
+                }, 2000);
+            }
+        }, 1000);
+    });
+    
+    // Add saving indicator
+    if (!input.parentElement.querySelector('.saving-indicator')) {
+        const indicator = document.createElement('span');
+        indicator.className = 'saving-indicator';
+        indicator.style.display = 'none';
+        indicator.style.marginLeft = '8px';
+        indicator.style.fontSize = '12px';
+        indicator.style.color = '#28a745';
+        input.parentElement.appendChild(indicator);
+    }
+}
+
+// Save profile field to API and localStorage
+async function saveProfileField(fieldName, value) {
+    try {
+        // Get current admin data
+        const currentAdminStr = localStorage.getItem('asa_current_admin');
+        let currentAdmin = currentAdminStr ? JSON.parse(currentAdminStr) : {};
+        
+        // Update the field
+        currentAdmin[fieldName] = value;
+        
+        // Update localStorage immediately
+        localStorage.setItem('asa_current_admin', JSON.stringify(currentAdmin));
+        
+        // Try to update via API if available
+        if (typeof asaAPI !== 'undefined' && asaAPI.isAuthenticated()) {
+            try {
+                // Combine firstName and lastName into name field for API
+                const name = [currentAdmin.firstName || '', currentAdmin.lastName || '']
+                    .filter(n => n.trim())
+                    .join(' ')
+                    .trim();
+                
+                await asaAPI.auth.updateProfile({ name: name || null });
+            } catch (apiError) {
+                console.warn('Could not update profile via API, saved locally:', apiError);
+            }
+        }
+    } catch (error) {
+        console.error('Error saving profile field:', error);
     }
 }
 
@@ -1119,11 +1244,10 @@ function initLoginPage() {
         loginForm.addEventListener('submit', handleLogin);
     }
 
-    // For demo purposes, allow any email/password
-    // In production, this would connect to a backend API
+    // Authentication now uses backend API
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
     e.preventDefault();
     
     const email = document.getElementById('email').value.trim().toLowerCase();
@@ -1135,23 +1259,21 @@ function handleLogin(e) {
         return;
     }
 
-    // Check against admin members list
-    const members = getAdminMembers();
-    const member = members.find(m => m.email.toLowerCase() === email && m.password === password);
-    
-    if (member) {
-        // Valid admin member
+    try {
+        // Login via API
+        const loginResponse = await asaAPI.auth.login(email, password);
+        
+        // Login successful - token is stored in api.js
         setAuthenticated(true);
-        localStorage.setItem('asa_current_admin', JSON.stringify(member));
+        
+        // Store user info for display
+        localStorage.setItem('asa_current_admin', JSON.stringify(loginResponse.user));
+        
+        // Redirect to dashboard
         window.location.href = 'dashboard.html';
-    } else {
-        // For demo purposes, still allow any credentials if no members are set up yet
-        if (members.length === 0) {
-            setAuthenticated(true);
-            window.location.href = 'dashboard.html';
-        } else {
-            alert('Invalid email or password. Please check your credentials.');
-        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert(error.message || 'Invalid email or password. Please check your credentials.');
     }
 }
 
@@ -1159,35 +1281,62 @@ function handleLogin(e) {
 // Dashboard
 // ============================================
 
-function initDashboard() {
-    updateDashboardStats();
+async function initDashboard() {
+    await updateDashboardStats();
 }
 
-function updateDashboardStats() {
-    const policies = getPolicies();
-    const bylaws = getBylaws();
-    const suggestions = getSuggestions();
+async function updateDashboardStats() {
+    try {
+        const policies = await getPolicies();
+        const bylaws = await getBylaws();
+        const suggestions = await getSuggestions();
 
-    const pendingPolicies = policies.filter(p => p.status === 'pending').length;
-    const newSuggestions = suggestions.filter(s => !s.viewed).length;
+        const pendingPolicies = policies.filter(p => p.status === 'pending').length;
+        const newSuggestions = suggestions.filter(s => s.status === 'pending').length;
 
-    document.getElementById('totalPolicies').textContent = policies.length;
-    document.getElementById('pendingApproval').textContent = pendingPolicies;
-    document.getElementById('totalBylaws').textContent = bylaws.length;
-    document.getElementById('newSuggestions').textContent = newSuggestions;
+        document.getElementById('totalPolicies').textContent = policies.length;
+        document.getElementById('pendingApproval').textContent = pendingPolicies;
+        document.getElementById('totalBylaws').textContent = bylaws.length;
+        document.getElementById('newSuggestions').textContent = newSuggestions;
+    } catch (error) {
+        console.error('Error updating dashboard stats:', error);
+    }
 }
 
 // ============================================
 // Policies Management
 // ============================================
 
-function initPoliciesPage() {
-    loadPolicies();
+async function initPoliciesPage() {
+    await loadPolicies();
 }
 
-function getPolicies() {
-    const stored = localStorage.getItem(STORAGE_KEYS.POLICIES);
-    return stored ? JSON.parse(stored) : [];
+async function getPolicies(filters = {}) {
+    if (typeof asaAPI === 'undefined') {
+        // Fallback to localStorage if API not available
+        const stored = localStorage.getItem(STORAGE_KEYS.POLICIES);
+        return stored ? JSON.parse(stored) : [];
+    }
+    
+    try {
+        const policies = await asaAPI.policies.getAllPolicies(filters);
+        // Normalize API response to match expected format
+        return policies.map(p => ({
+            id: p.id,
+            policyId: p.policy_id || p.id,
+            name: p.policy_name || p.name || 'Untitled',
+            policyName: p.policy_name || p.name || 'Untitled',
+            content: p.policy_content || p.content || '',
+            policyContent: p.policy_content || p.content || '',
+            section: p.section || '1',
+            status: p.status || 'draft',
+            updatedAt: p.updated_at || p.created_at,
+            createdAt: p.created_at
+        }));
+    } catch (error) {
+        console.error('Error fetching policies:', error);
+        return [];
+    }
 }
 
 // Get section name from section number
@@ -1204,13 +1353,16 @@ function savePolicies(policies) {
     localStorage.setItem(STORAGE_KEYS.POLICIES, JSON.stringify(policies));
 }
 
-function loadPolicies() {
-    const policies = getPolicies();
+async function loadPolicies() {
     const container = document.getElementById('policiesList');
-    
     if (!container) return;
+    
+    container.innerHTML = '<div class="loading">Loading policies...</div>';
+    
+    try {
+        const policies = await getPolicies();
 
-    if (policies.length === 0) {
+        if (policies.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">📄</div>
@@ -1240,7 +1392,17 @@ function loadPolicies() {
         `;
     }
 
-    container.innerHTML = html;
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Error loading policies:', error);
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚠️</div>
+                <div class="empty-state-text">Error loading policies</div>
+                <div class="empty-state-subtext">${error.message || 'Please try again later'}</div>
+            </div>
+        `;
+    }
 }
 
 function groupPoliciesBySection(policies) {
@@ -1292,16 +1454,41 @@ function editPolicy(id) {
     window.location.href = `policy-form.html?id=${id}`;
 }
 
-function deletePolicy(id) {
-    const policies = getPolicies();
-    const policy = policies.find(p => p.id === id);
-    const policyName = policy ? (policy.name || policy.policyName || 'this policy') : 'this policy';
-    
-    if (confirm(`⚠️ WARNING: Are you sure you want to delete "${policyName}"?\n\nThis action cannot be undone. The policy will be permanently removed from the system.`)) {
-        const filtered = policies.filter(p => p.id !== id);
-        savePolicies(filtered);
-        loadPolicies();
-        alert('Policy deleted successfully.');
+async function deletePolicy(id) {
+    try {
+        // Get policy info first (try API, fallback to localStorage)
+        let policy = null;
+        if (typeof asaAPI !== 'undefined') {
+            try {
+                policy = await asaAPI.policies.getPolicy(id);
+            } catch (e) {
+                // If API fails, try localStorage
+                const policies = await getPoliciesSync();
+                policy = policies.find(p => p.id === id);
+            }
+        } else {
+            const policies = await getPoliciesSync();
+            policy = policies.find(p => p.id === id);
+        }
+        
+        const policyName = policy ? (policy.policy_name || policy.name || policy.policyName || 'this policy') : 'this policy';
+        
+        if (confirm(`⚠️ WARNING: Are you sure you want to delete "${policyName}"?\n\nThis action cannot be undone. The policy will be permanently removed from the system.`)) {
+            if (typeof asaAPI !== 'undefined') {
+                // Use API
+                await asaAPI.policies.deletePolicy(id);
+            } else {
+                // Fallback to localStorage
+                const policies = await getPoliciesSync();
+                const filtered = policies.filter(p => p.id !== id);
+                savePolicies(filtered);
+            }
+            await loadPolicies();
+            alert('Policy deleted successfully.');
+        }
+    } catch (error) {
+        console.error('Error deleting policy:', error);
+        alert('Error deleting policy: ' + (error.message || 'Unknown error'));
     }
 }
 
@@ -1309,13 +1496,13 @@ function deletePolicy(id) {
 // Policy Form
 // ============================================
 
-function initPolicyForm() {
+async function initPolicyForm() {
     const form = document.getElementById('policyForm');
     const urlParams = new URLSearchParams(window.location.search);
     const policyId = urlParams.get('id');
 
     if (policyId) {
-        loadPolicyForEdit(policyId);
+        await loadPolicyForEdit(policyId);
     }
 
     if (form) {
@@ -1323,59 +1510,99 @@ function initPolicyForm() {
     }
 }
 
-function loadPolicyForEdit(id) {
-    const policies = getPolicies();
-    const policy = policies.find(p => p.id === id);
-    
-    if (policy) {
+async function loadPolicyForEdit(id) {
+    try {
+        let policy = null;
+        if (typeof asaAPI !== 'undefined') {
+            const policyData = await asaAPI.policies.getPolicy(id);
+            // Normalize API response
+            policy = {
+                id: policyData.id,
+                policyId: policyData.policy_id || policyData.id,
+                name: policyData.policy_name || policyData.name || 'Untitled',
+                policyName: policyData.policy_name || policyData.name || 'Untitled',
+                content: policyData.policy_content || policyData.content || '',
+                policyContent: policyData.policy_content || policyData.content || '',
+                section: policyData.section || '1',
+                status: policyData.status || 'draft'
+            };
+        } else {
+            const policies = await getPoliciesSync();
+            policy = policies.find(p => p.id === id);
+        }
+        
+        if (policy) {
         document.getElementById('formTitle').textContent = 'Update Policy';
         document.getElementById('policyId').value = policy.policyId || '';
         document.getElementById('policyName').value = policy.name || policy.policyName || '';
         document.getElementById('section').value = policy.section || '';
         document.getElementById('policyContent').value = policy.content || policy.policyContent || '';
         
-        // Store the ID for update
-        document.getElementById('policyForm').dataset.editId = id;
+            // Store the ID for update
+            document.getElementById('policyForm').dataset.editId = id;
+        }
+    } catch (error) {
+        console.error('Error loading policy for edit:', error);
+        alert('Error loading policy: ' + (error.message || 'Unknown error'));
     }
 }
 
-function handlePolicySubmit(e) {
+async function handlePolicySubmit(e) {
     e.preventDefault();
     
     const form = e.target;
     const editId = form.dataset.editId;
     
     const policyData = {
-        id: editId || generateId(),
-        policyId: document.getElementById('policyId').value,
-        name: document.getElementById('policyName').value,
-        policyName: document.getElementById('policyName').value,
-        type: 'policy', // Default type
-        policyType: 'policy', // Default type for backward compatibility
+        policy_id: document.getElementById('policyId').value,
+        policy_name: document.getElementById('policyName').value,
         section: document.getElementById('section').value,
-        content: document.getElementById('policyContent').value,
-        policyContent: document.getElementById('policyContent').value,
-        status: 'pending',
-        createdAt: editId ? getPolicies().find(p => p.id === editId)?.createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        policy_content: document.getElementById('policyContent').value,
+        status: 'pending'
     };
 
-    const policies = getPolicies();
-    
-    if (editId) {
-        // Update existing
-        const index = policies.findIndex(p => p.id === editId);
-        if (index !== -1) {
-            policies[index] = { ...policies[index], ...policyData };
+    try {
+        if (editId && typeof asaAPI !== 'undefined') {
+            // Update existing via API
+            await asaAPI.policies.updatePolicy(editId, policyData);
+        } else if (typeof asaAPI !== 'undefined') {
+            // Create new via API
+            await asaAPI.policies.createPolicy(policyData);
+        } else {
+            // Fallback to localStorage
+            const policies = await getPoliciesSync();
+            const fullPolicyData = {
+                id: editId || generateId(),
+                policyId: policyData.policy_id,
+                name: policyData.policy_name,
+                policyName: policyData.policy_name,
+                type: 'policy',
+                policyType: 'policy',
+                section: policyData.section,
+                content: policyData.policy_content,
+                policyContent: policyData.policy_content,
+                status: 'pending',
+                createdAt: editId ? policies.find(p => p.id === editId)?.createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            if (editId) {
+                const index = policies.findIndex(p => p.id === editId);
+                if (index !== -1) {
+                    policies[index] = { ...policies[index], ...fullPolicyData };
+                }
+            } else {
+                policies.push(fullPolicyData);
+            }
+            savePolicies(policies);
         }
-    } else {
-        // Create new
-        policies.push(policyData);
+        
+        alert('Policy submitted for approval successfully!');
+        window.location.href = 'policies.html';
+    } catch (error) {
+        console.error('Error saving policy:', error);
+        alert('Error saving policy: ' + (error.message || 'Unknown error'));
     }
-    
-    savePolicies(policies);
-    alert('Policy submitted for approval successfully!');
-    window.location.href = 'policies.html';
 }
 
 function generateId() {
@@ -1386,26 +1613,56 @@ function generateId() {
 // Bylaws Management
 // ============================================
 
-function initBylawsPage() {
-    loadBylaws();
+async function initBylawsPage() {
+    await loadBylaws();
 }
 
-function getBylaws() {
+async function getBylawsSync() {
+    // Synchronous version for backward compatibility
     const stored = localStorage.getItem(STORAGE_KEYS.BYLAWS);
     return stored ? JSON.parse(stored) : [];
+}
+
+async function getBylaws(filters = {}) {
+    if (typeof asaAPI === 'undefined') {
+        return await getBylawsSync();
+    }
+    
+    try {
+        const bylaws = await asaAPI.bylaws.getAllBylaws(filters);
+        // Normalize API response
+        return bylaws.map(b => ({
+            id: b.id,
+            number: b.bylaw_number || b.number || 0,
+            bylawNumber: b.bylaw_number || b.number || 0,
+            title: b.bylaw_title || b.title || 'Untitled',
+            bylawTitle: b.bylaw_title || b.title || 'Untitled',
+            content: b.bylaw_content || b.content || '',
+            bylawContent: b.bylaw_content || b.content || '',
+            status: b.status || 'draft',
+            updatedAt: b.updated_at || b.created_at,
+            createdAt: b.created_at
+        }));
+    } catch (error) {
+        console.error('Error fetching bylaws:', error);
+        return [];
+    }
 }
 
 function saveBylaws(bylaws) {
     localStorage.setItem(STORAGE_KEYS.BYLAWS, JSON.stringify(bylaws));
 }
 
-function loadBylaws() {
-    const bylaws = getBylaws();
+async function loadBylaws() {
     const container = document.getElementById('bylawsList');
-    
     if (!container) return;
+    
+    container.innerHTML = '<div class="loading">Loading bylaws...</div>';
+    
+    try {
+        const bylaws = await getBylaws();
 
-    if (bylaws.length === 0) {
+        if (bylaws.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">📋</div>
@@ -1419,7 +1676,17 @@ function loadBylaws() {
     // Sort by number
     const sorted = [...bylaws].sort((a, b) => (a.number || 0) - (b.number || 0));
     
-    container.innerHTML = sorted.map(bylaw => renderBylawItem(bylaw)).join('');
+        container.innerHTML = sorted.map(bylaw => renderBylawItem(bylaw)).join('');
+    } catch (error) {
+        console.error('Error loading bylaws:', error);
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚠️</div>
+                <div class="empty-state-text">Error loading bylaws</div>
+                <div class="empty-state-subtext">${error.message || 'Please try again later'}</div>
+            </div>
+        `;
+    }
 }
 
 function renderBylawItem(bylaw) {
@@ -1449,16 +1716,37 @@ function editBylaw(id) {
     window.location.href = `bylaw-form.html?id=${id}`;
 }
 
-function deleteBylaw(id) {
-    const bylaws = getBylaws();
-    const bylaw = bylaws.find(b => b.id === id);
-    const bylawName = bylaw ? (`Bylaw #${bylaw.number || bylaw.bylawNumber || ''} - ${bylaw.title || bylaw.bylawTitle || 'Untitled'}`) : 'this bylaw';
-    
-    if (confirm(`⚠️ WARNING: Are you sure you want to delete "${bylawName}"?\n\nThis action cannot be undone. The bylaw will be permanently removed from the system.`)) {
-        const filtered = bylaws.filter(b => b.id !== id);
-        saveBylaws(filtered);
-        loadBylaws();
-        alert('Bylaw deleted successfully.');
+async function deleteBylaw(id) {
+    try {
+        let bylaw = null;
+        if (typeof asaAPI !== 'undefined') {
+            try {
+                bylaw = await asaAPI.bylaws.getBylaw(id);
+            } catch (e) {
+                const bylaws = await getBylawsSync();
+                bylaw = bylaws.find(b => b.id === id);
+            }
+        } else {
+            const bylaws = await getBylawsSync();
+            bylaw = bylaws.find(b => b.id === id);
+        }
+        
+        const bylawName = bylaw ? (`Bylaw #${bylaw.bylaw_number || bylaw.number || bylaw.bylawNumber || ''} - ${bylaw.bylaw_title || bylaw.title || bylaw.bylawTitle || 'Untitled'}`) : 'this bylaw';
+        
+        if (confirm(`⚠️ WARNING: Are you sure you want to delete "${bylawName}"?\n\nThis action cannot be undone. The bylaw will be permanently removed from the system.`)) {
+            if (typeof asaAPI !== 'undefined') {
+                await asaAPI.bylaws.deleteBylaw(id);
+            } else {
+                const bylaws = await getBylawsSync();
+                const filtered = bylaws.filter(b => b.id !== id);
+                saveBylaws(filtered);
+            }
+            await loadBylaws();
+            alert('Bylaw deleted successfully.');
+        }
+    } catch (error) {
+        console.error('Error deleting bylaw:', error);
+        alert('Error deleting bylaw: ' + (error.message || 'Unknown error'));
     }
 }
 
@@ -1466,13 +1754,13 @@ function deleteBylaw(id) {
 // Bylaw Form
 // ============================================
 
-function initBylawForm() {
+async function initBylawForm() {
     const form = document.getElementById('bylawForm');
     const urlParams = new URLSearchParams(window.location.search);
     const bylawId = urlParams.get('id');
 
     if (bylawId) {
-        loadBylawForEdit(bylawId);
+        await loadBylawForEdit(bylawId);
     }
 
     if (form) {
@@ -1480,53 +1768,90 @@ function initBylawForm() {
     }
 }
 
-function loadBylawForEdit(id) {
-    const bylaws = getBylaws();
-    const bylaw = bylaws.find(b => b.id === id);
-    
-    if (bylaw) {
+async function loadBylawForEdit(id) {
+    try {
+        let bylaw = null;
+        if (typeof asaAPI !== 'undefined') {
+            const bylawData = await asaAPI.bylaws.getBylaw(id);
+            bylaw = {
+                id: bylawData.id,
+                number: bylawData.bylaw_number || bylawData.number || 0,
+                bylawNumber: bylawData.bylaw_number || bylawData.number || 0,
+                title: bylawData.bylaw_title || bylawData.title || '',
+                bylawTitle: bylawData.bylaw_title || bylawData.title || '',
+                content: bylawData.bylaw_content || bylawData.content || '',
+                bylawContent: bylawData.bylaw_content || bylawData.content || ''
+            };
+        } else {
+            const bylaws = await getBylawsSync();
+            bylaw = bylaws.find(b => b.id === id);
+        }
+        
+        if (bylaw) {
         document.getElementById('formTitle').textContent = 'Update Bylaw';
         document.getElementById('bylawNumber').value = bylaw.number || bylaw.bylawNumber || '';
         document.getElementById('bylawTitle').value = bylaw.title || bylaw.bylawTitle || '';
         document.getElementById('bylawContent').value = bylaw.content || bylaw.bylawContent || '';
         
-        document.getElementById('bylawForm').dataset.editId = id;
+            document.getElementById('bylawForm').dataset.editId = id;
+        }
+    } catch (error) {
+        console.error('Error loading bylaw for edit:', error);
+        alert('Error loading bylaw: ' + (error.message || 'Unknown error'));
     }
 }
 
-function handleBylawSubmit(e) {
+async function handleBylawSubmit(e) {
     e.preventDefault();
     
     const form = e.target;
     const editId = form.dataset.editId;
     
     const bylawData = {
-        id: editId || generateBylawId(),
-        number: parseInt(document.getElementById('bylawNumber').value),
-        bylawNumber: parseInt(document.getElementById('bylawNumber').value),
-        title: document.getElementById('bylawTitle').value,
-        bylawTitle: document.getElementById('bylawTitle').value,
-        content: document.getElementById('bylawContent').value,
-        bylawContent: document.getElementById('bylawContent').value,
-        status: 'pending',
-        createdAt: editId ? getBylaws().find(b => b.id === editId)?.createdAt : new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        bylaw_number: parseInt(document.getElementById('bylawNumber').value),
+        bylaw_title: document.getElementById('bylawTitle').value,
+        bylaw_content: document.getElementById('bylawContent').value,
+        status: 'pending'
     };
 
-    const bylaws = getBylaws();
-    
-    if (editId) {
-        const index = bylaws.findIndex(b => b.id === editId);
-        if (index !== -1) {
-            bylaws[index] = { ...bylaws[index], ...bylawData };
+    try {
+        if (editId && typeof asaAPI !== 'undefined') {
+            await asaAPI.bylaws.updateBylaw(editId, bylawData);
+        } else if (typeof asaAPI !== 'undefined') {
+            await asaAPI.bylaws.createBylaw(bylawData);
+        } else {
+            // Fallback to localStorage
+            const bylaws = await getBylawsSync();
+            const fullBylawData = {
+                id: editId || generateBylawId(),
+                number: bylawData.bylaw_number,
+                bylawNumber: bylawData.bylaw_number,
+                title: bylawData.bylaw_title,
+                bylawTitle: bylawData.bylaw_title,
+                content: bylawData.bylaw_content,
+                bylawContent: bylawData.bylaw_content,
+                status: 'pending',
+                createdAt: editId ? bylaws.find(b => b.id === editId)?.createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            if (editId) {
+                const index = bylaws.findIndex(b => b.id === editId);
+                if (index !== -1) {
+                    bylaws[index] = { ...bylaws[index], ...fullBylawData };
+                }
+            } else {
+                bylaws.push(fullBylawData);
+            }
+            saveBylaws(bylaws);
         }
-    } else {
-        bylaws.push(bylawData);
+        
+        alert('Bylaw submitted for approval successfully!');
+        window.location.href = 'bylaw.html';
+    } catch (error) {
+        console.error('Error saving bylaw:', error);
+        alert('Error saving bylaw: ' + (error.message || 'Unknown error'));
     }
-    
-    saveBylaws(bylaws);
-    alert('Bylaw submitted for approval successfully!');
-    window.location.href = 'bylaw.html';
 }
 
 function generateBylawId() {
@@ -1537,26 +1862,53 @@ function generateBylawId() {
 // Suggestions Management
 // ============================================
 
-function initSuggestionsPage() {
-    loadSuggestions();
+async function initSuggestionsPage() {
+    await loadSuggestions();
 }
 
-function getSuggestions() {
+async function getSuggestionsSync() {
+    // Synchronous version for backward compatibility
     const stored = localStorage.getItem(STORAGE_KEYS.SUGGESTIONS);
     return stored ? JSON.parse(stored) : [];
+}
+
+async function getSuggestions(filters = {}) {
+    if (typeof asaAPI === 'undefined') {
+        return await getSuggestionsSync();
+    }
+    
+    try {
+        const suggestions = await asaAPI.suggestions.getAllSuggestions(filters);
+        // Normalize API response - add viewed field for backward compatibility
+        return suggestions.map(s => ({
+            id: s.id,
+            policyId: s.policy_id,
+            suggestion: s.suggestion || '',
+            status: s.status || 'pending',
+            viewed: s.status === 'viewed' || s.status !== 'pending',
+            createdAt: s.created_at,
+            updatedAt: s.updated_at
+        }));
+    } catch (error) {
+        console.error('Error fetching suggestions:', error);
+        return [];
+    }
 }
 
 function saveSuggestions(suggestions) {
     localStorage.setItem(STORAGE_KEYS.SUGGESTIONS, JSON.stringify(suggestions));
 }
 
-function loadSuggestions() {
-    const suggestions = getSuggestions();
+async function loadSuggestions() {
     const container = document.getElementById('suggestionsList');
-    
     if (!container) return;
+    
+    container.innerHTML = '<div class="loading">Loading suggestions...</div>';
+    
+    try {
+        const suggestions = await getSuggestions();
 
-    if (suggestions.length === 0) {
+        if (suggestions.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">💡</div>
@@ -1570,7 +1922,17 @@ function loadSuggestions() {
     // Sort by date (newest first)
     const sorted = [...suggestions].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     
-    container.innerHTML = sorted.map(suggestion => renderSuggestionItem(suggestion)).join('');
+        container.innerHTML = sorted.map(suggestion => renderSuggestionItem(suggestion)).join('');
+    } catch (error) {
+        console.error('Error loading suggestions:', error);
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">⚠️</div>
+                <div class="empty-state-text">Error loading suggestions</div>
+                <div class="empty-state-subtext">${error.message || 'Please try again later'}</div>
+            </div>
+        `;
+    }
 }
 
 function renderSuggestionItem(suggestion) {
@@ -1594,26 +1956,51 @@ function renderSuggestionItem(suggestion) {
     `;
 }
 
-function markSuggestionViewed(id) {
-    const suggestions = getSuggestions();
-    const index = suggestions.findIndex(s => s.id === id);
-    if (index !== -1) {
-        suggestions[index].viewed = true;
-        saveSuggestions(suggestions);
-        loadSuggestions();
+async function markSuggestionViewed(id) {
+    // Note: API doesn't have a "viewed" field, so this is just for local UI state
+    // In a real implementation, you might want to track this differently
+    try {
+        const suggestions = await getSuggestions();
+        // This is just for local UI - API doesn't support this field
+        await loadSuggestions();
+    } catch (error) {
+        console.error('Error marking suggestion viewed:', error);
     }
 }
 
-function deleteSuggestion(id) {
-    const suggestions = getSuggestions();
-    const suggestion = suggestions.find(s => s.id === id);
-    const suggestionPreview = suggestion ? (suggestion.content || suggestion.suggestion || '').substring(0, 50) : 'this suggestion';
-    
-    if (confirm(`⚠️ WARNING: Are you sure you want to delete this student suggestion?\n\nPreview: "${suggestionPreview}..."\n\nThis action cannot be undone. The suggestion will be permanently removed from the system.`)) {
-        const filtered = suggestions.filter(s => s.id !== id);
-        saveSuggestions(filtered);
-        loadSuggestions();
-        alert('Suggestion deleted successfully.');
+async function deleteSuggestion(id) {
+    try {
+        let suggestion = null;
+        if (typeof asaAPI !== 'undefined') {
+            try {
+                // Get suggestion preview (API doesn't return single suggestion, but we can get all and find)
+                const suggestions = await getSuggestions();
+                suggestion = suggestions.find(s => s.id === id);
+            } catch (e) {
+                const suggestions = await getSuggestionsSync();
+                suggestion = suggestions.find(s => s.id === id);
+            }
+        } else {
+            const suggestions = await getSuggestionsSync();
+            suggestion = suggestions.find(s => s.id === id);
+        }
+        
+        const suggestionPreview = suggestion ? (suggestion.content || suggestion.suggestion || '').substring(0, 50) : 'this suggestion';
+        
+        if (confirm(`⚠️ WARNING: Are you sure you want to delete this student suggestion?\n\nPreview: "${suggestionPreview}..."\n\nThis action cannot be undone. The suggestion will be permanently removed from the system.`)) {
+            if (typeof asaAPI !== 'undefined') {
+                await asaAPI.suggestions.deleteSuggestion(id);
+            } else {
+                const suggestions = await getSuggestionsSync();
+                const filtered = suggestions.filter(s => s.id !== id);
+                saveSuggestions(filtered);
+            }
+            await loadSuggestions();
+            alert('Suggestion deleted successfully.');
+        }
+    } catch (error) {
+        console.error('Error deleting suggestion:', error);
+        alert('Error deleting suggestion: ' + (error.message || 'Unknown error'));
     }
 }
 
@@ -1683,34 +2070,58 @@ function initSidebarNavigation() {
 // Approval Workflow (for future implementation)
 // ============================================
 
-function approvePolicy(id, showAlert = true) {
-    const policies = getPolicies();
-    const index = policies.findIndex(p => p.id === id);
-    if (index !== -1) {
-        policies[index].status = 'approved';
-        policies[index].approvedAt = new Date().toISOString();
-        savePolicies(policies);
+async function approvePolicy(id, showAlert = true) {
+    try {
+        if (typeof asaAPI !== 'undefined') {
+            await asaAPI.policies.approvePolicy(id);
+        } else {
+            // Fallback to localStorage
+            const policies = await getPoliciesSync();
+            const index = policies.findIndex(p => p.id === id);
+            if (index !== -1) {
+                policies[index].status = 'approved';
+                policies[index].approvedAt = new Date().toISOString();
+                savePolicies(policies);
+            }
+        }
         
         // Only reload and show alert if not called from approvals page
         if (showAlert) {
-            loadPolicies();
+            await loadPolicies();
             alert('Policy approved successfully!');
+        }
+    } catch (error) {
+        console.error('Error approving policy:', error);
+        if (showAlert) {
+            alert('Error approving policy: ' + (error.message || 'Unknown error'));
         }
     }
 }
 
-function approveBylaw(id, showAlert = true) {
-    const bylaws = getBylaws();
-    const index = bylaws.findIndex(b => b.id === id);
-    if (index !== -1) {
-        bylaws[index].status = 'approved';
-        bylaws[index].approvedAt = new Date().toISOString();
-        saveBylaws(bylaws);
+async function approveBylaw(id, showAlert = true) {
+    try {
+        if (typeof asaAPI !== 'undefined') {
+            await asaAPI.bylaws.approveBylaw(id);
+        } else {
+            // Fallback to localStorage
+            const bylaws = await getBylawsSync();
+            const index = bylaws.findIndex(b => b.id === id);
+            if (index !== -1) {
+                bylaws[index].status = 'approved';
+                bylaws[index].approvedAt = new Date().toISOString();
+                saveBylaws(bylaws);
+            }
+        }
         
         // Only reload and show alert if not called from approvals page
         if (showAlert) {
-            loadBylaws();
+            await loadBylaws();
             alert('Bylaw approved successfully!');
+        }
+    } catch (error) {
+        console.error('Error approving bylaw:', error);
+        if (showAlert) {
+            alert('Error approving bylaw: ' + (error.message || 'Unknown error'));
         }
     }
 }

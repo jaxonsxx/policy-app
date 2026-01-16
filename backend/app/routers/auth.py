@@ -281,6 +281,41 @@ async def get_current_user_info(
     }
 
 
+@router.put("/me", response_model=UserResponse)
+async def update_current_user_profile(
+    profile_data: UpdateProfileRequest,
+    current_user: dict = Depends(get_current_user),
+    db: Client = Depends(get_db)
+):
+    """Update current user profile (name)"""
+    try:
+        # Update user name in users table
+        update_data = {}
+        if profile_data.name is not None:
+            update_data["name"] = profile_data.name
+        
+        if update_data:
+            response = db.table(settings.USERS_TABLE).update(update_data).eq("id", current_user["id"]).execute()
+            
+            if response.data:
+                user_record = response.data[0]
+                return {
+                    "id": user_record["id"],
+                    "email": user_record["email"],
+                    "name": user_record.get("name"),
+                    "role": user_record.get("role", "public"),
+                    "created_at": user_record.get("created_at")
+                }
+        
+        # If no update, return current user
+        return await get_current_user_info(current_user, db)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating profile: {str(e)}"
+        )
+
+
 @router.post("/logout")
 async def logout(
     current_user: dict = Depends(get_current_user),
@@ -332,6 +367,11 @@ async def get_all_users(
 class UpdateUserRoleRequest(BaseModel):
     """Request schema for updating user role"""
     role: UserRole
+
+
+class UpdateProfileRequest(BaseModel):
+    """Request schema for updating user profile"""
+    name: Optional[str] = None
 
 
 @router.put("/users/{user_id}/role", response_model=UserResponse)

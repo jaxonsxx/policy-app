@@ -29,39 +29,55 @@ function getSectionName(section) {
 }
 
 /**
- * Retrieves all policies from localStorage.
- * @returns {Array<Object>} An array of policy objects, or an empty array if none exist.
+ * Retrieves approved policies from API.
+ * @returns {Promise<Array>} A promise that resolves to an array of approved policy objects.
  */
-function getPolicies() {
-    const stored = localStorage.getItem(STORAGE_KEYS.POLICIES);
-    return stored ? JSON.parse(stored) : [];
+async function getApprovedPolicies(section = null, search = null) {
+    try {
+        const policies = await asaAPI.policies.getApprovedPolicies(section, search);
+        // Normalize API response to match expected format
+        return policies.map(p => ({
+            id: p.id,
+            policyId: p.policy_id || p.id,
+            name: p.policy_name || p.name || 'Untitled',
+            policyName: p.policy_name || p.name || 'Untitled',
+            content: p.policy_content || p.content || '',
+            policyContent: p.policy_content || p.content || '',
+            section: p.section || '1',
+            status: p.status || 'approved',
+            updatedAt: p.updated_at || p.created_at,
+            createdAt: p.created_at
+        }));
+    } catch (error) {
+        console.error('Error fetching approved policies:', error);
+        return [];
+    }
 }
 
 /**
- * Retrieves all bylaws from localStorage.
- * @returns {Array<Object>} An array of bylaw objects, or an empty array if none exist.
+ * Retrieves approved bylaws from API.
+ * @returns {Promise<Array>} A promise that resolves to an array of approved bylaw objects.
  */
-function getBylaws() {
-    const stored = localStorage.getItem(STORAGE_KEYS.BYLAWS);
-    return stored ? JSON.parse(stored) : [];
-}
-
-/**
- * Retrieves only approved policies from localStorage.
- * @returns {Array<Object>} An array of approved policy objects.
- */
-function getApprovedPolicies() {
-    const policies = getPolicies();
-    return policies.filter(p => p.status === 'approved');
-}
-
-/**
- * Retrieves only approved bylaws from localStorage.
- * @returns {Array<Object>} An array of approved bylaw objects.
- */
-function getApprovedBylaws() {
-    const bylaws = getBylaws();
-    return bylaws.filter(b => b.status === 'approved');
+async function getApprovedBylaws(search = null) {
+    try {
+        const bylaws = await asaAPI.bylaws.getApprovedBylaws(search);
+        // Normalize API response to match expected format
+        return bylaws.map(b => ({
+            id: b.id,
+            number: b.bylaw_number || b.number || '',
+            bylawNumber: b.bylaw_number || b.number || '',
+            title: b.bylaw_title || b.title || 'Untitled',
+            bylawTitle: b.bylaw_title || b.title || 'Untitled',
+            content: b.bylaw_content || b.content || '',
+            bylawContent: b.bylaw_content || b.content || '',
+            status: b.status || 'approved',
+            updatedAt: b.updated_at || b.created_at,
+            createdAt: b.created_at
+        }));
+    } catch (error) {
+        console.error('Error fetching approved bylaws:', error);
+        return [];
+    }
 }
 
 // State
@@ -72,16 +88,17 @@ let bylawSearchTerm = "";
 /**
  * Renders all policy sections with their cards in the sections container.
  * Filters policies based on the current search term and groups them by section.
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function renderSections() {
+async function renderSections() {
     const container = document.getElementById('sectionsContainer');
     if (!container) return;
     
-    container.innerHTML = '';
+    container.innerHTML = '<div class="loading">Loading policies...</div>';
 
-    // Get approved policies from localStorage
-    const approvedPolicies = getApprovedPolicies();
+    try {
+        // Get approved policies from API
+        const approvedPolicies = await getApprovedPolicies(null, searchTerm);
     
     // Group policies by section
     const sectionsMap = {
@@ -121,8 +138,12 @@ function renderSections() {
         }
     });
 
-    if (container.children.length === 0) {
-        container.innerHTML = '<div class="no-results">No results found</div>';
+        if (container.children.length === 0) {
+            container.innerHTML = '<div class="no-results">No results found</div>';
+        }
+    } catch (error) {
+        console.error('Error rendering sections:', error);
+        container.innerHTML = '<div class="no-results">Error loading policies. Please try again later.</div>';
     }
 }
 
@@ -215,7 +236,7 @@ function toggleSection(sectionId) {
  */
 function handleCardClick(item) {
     // Navigate to policy detail page with the item's id as a query parameter
-    window.location.href = `/public/policy-detail.html?id=${item.id}`;
+    window.location.href = `/frontend/public/policy-detail.html?id=${item.id}`;
 }
 
 /**
@@ -225,7 +246,7 @@ function handleCardClick(item) {
  * @param {Event} e - The input event object.
  * @returns {void}
  */
-function handleSearch(e) {
+async function handleSearch(e) {
     searchTerm = e.target.value;
     
     // Open all sections when searching
@@ -233,22 +254,23 @@ function handleSearch(e) {
         openSections = [1, 2, 3];
     }
     
-    renderSections();
+    await renderSections();
 }
 
 /**
  * Renders all bylaw cards in the bylaws container.
  * Filters bylaws based on the current search term.
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function renderBylaws() {
+async function renderBylaws() {
     const container = document.getElementById('bylawsContainer');
     if (!container) return;
     
-    container.innerHTML = '';
+    container.innerHTML = '<div class="loading">Loading bylaws...</div>';
     
-    // Get approved bylaws from localStorage
-    const approvedBylaws = getApprovedBylaws();
+    try {
+        // Get approved bylaws from API
+        const approvedBylaws = await getApprovedBylaws(bylawSearchTerm);
     
     const filteredBylaws = approvedBylaws.filter(bylaw => {
         const title = (bylaw.title || bylaw.bylawTitle || '').toLowerCase();
@@ -267,8 +289,12 @@ function renderBylaws() {
         });
         
         container.appendChild(grid);
-    } else {
-        container.innerHTML = '<div class="no-results">No results found</div>';
+        } else {
+            container.innerHTML = '<div class="no-results">No results found</div>';
+        }
+    } catch (error) {
+        console.error('Error rendering bylaws:', error);
+        container.innerHTML = '<div class="no-results">Error loading bylaws. Please try again later.</div>';
     }
 }
 
@@ -303,26 +329,26 @@ function createBylawCardElement(bylaw) {
  */
 function handleBylawCardClick(bylaw) {
     // Navigate to bylaw detail page with the bylaw's id as a query parameter
-    window.location.href = `/public/bylaw-detail.html?id=${bylaw.id}`;
+    window.location.href = `/frontend/public/bylaw-detail.html?id=${bylaw.id}`;
 }
 
 /**
  * Completed by Dominic del Rosario, 
  * Handles search input events for filtering bylaws.
  * @param {Event} e - The input event object.
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function handleBylawSearch(e) {
+async function handleBylawSearch(e) {
     bylawSearchTerm = e.target.value;
-    renderBylaws();
+    await renderBylaws();
 }
 
 /**
  * Loads and displays policy detail information on the policy detail page.
- * Retrieves policy data from localStorage and updates the page content.
- * @returns {void}
+ * Retrieves policy data from API and updates the page content.
+ * @returns {Promise<void>}
  */
-function loadPolicyDetail() {
+async function loadPolicyDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const policyId = urlParams.get('id');
     
@@ -331,13 +357,27 @@ function loadPolicyDetail() {
         return;
     }
     
-    const policies = getPolicies();
-    const policy = policies.find(p => p.id === policyId);
-    
-    if (!policy || policy.status !== 'approved') {
-        document.querySelector('.policy-detail-container').innerHTML = '<div class="no-results">Policy not found</div>';
-        return;
-    }
+    try {
+        const policyData = await asaAPI.policies.getPolicy(policyId);
+        
+        // Normalize API response
+        const policy = {
+            id: policyData.id,
+            policyId: policyData.policy_id || policyData.id,
+            name: policyData.policy_name || policyData.name || 'Untitled',
+            policyName: policyData.policy_name || policyData.name || 'Untitled',
+            content: policyData.policy_content || policyData.content || '',
+            policyContent: policyData.policy_content || policyData.content || '',
+            section: policyData.section || '1',
+            status: policyData.status || 'approved',
+            updatedAt: policyData.updated_at || policyData.created_at,
+            createdAt: policyData.created_at
+        };
+        
+        if (policy.status !== 'approved') {
+            document.querySelector('.policy-detail-container').innerHTML = '<div class="no-results">Policy not found</div>';
+            return;
+        }
     
     // Update page content
     const policyNumber = document.querySelector('.policy-number');
@@ -363,16 +403,20 @@ function loadPolicyDetail() {
         policyUpdated.textContent = `Last Updated: ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
     }
     
-    // Update sidebar with other policies
-    updatePolicySidebar(policy);
+        // Update sidebar with other policies
+        await updatePolicySidebar(policy);
+    } catch (error) {
+        console.error('Error loading policy detail:', error);
+        document.querySelector('.policy-detail-container').innerHTML = '<div class="no-results">Error loading policy. Please try again later.</div>';
+    }
 }
 
 /**
  * Loads and displays bylaw detail information on the bylaw detail page.
- * Retrieves bylaw data from localStorage and updates the page content.
- * @returns {void}
+ * Retrieves bylaw data from API and updates the page content.
+ * @returns {Promise<void>}
  */
-function loadBylawDetail() {
+async function loadBylawDetail() {
     const urlParams = new URLSearchParams(window.location.search);
     const bylawId = urlParams.get('id');
     
@@ -381,13 +425,27 @@ function loadBylawDetail() {
         return;
     }
     
-    const bylaws = getBylaws();
-    const bylaw = bylaws.find(b => b.id === bylawId);
-    
-    if (!bylaw || bylaw.status !== 'approved') {
-        document.querySelector('.policy-detail-container').innerHTML = '<div class="no-results">Bylaw not found</div>';
-        return;
-    }
+    try {
+        const bylawData = await asaAPI.bylaws.getBylaw(bylawId);
+        
+        // Normalize API response
+        const bylaw = {
+            id: bylawData.id,
+            number: bylawData.bylaw_number || bylawData.number || '',
+            bylawNumber: bylawData.bylaw_number || bylawData.number || '',
+            title: bylawData.bylaw_title || bylawData.title || 'Untitled',
+            bylawTitle: bylawData.bylaw_title || bylawData.title || 'Untitled',
+            content: bylawData.bylaw_content || bylawData.content || '',
+            bylawContent: bylawData.bylaw_content || bylawData.content || '',
+            status: bylawData.status || 'approved',
+            updatedAt: bylawData.updated_at || bylawData.created_at,
+            createdAt: bylawData.created_at
+        };
+        
+        if (bylaw.status !== 'approved') {
+            document.querySelector('.policy-detail-container').innerHTML = '<div class="no-results">Bylaw not found</div>';
+            return;
+        }
     
     // Update page content
     const bylawNumber = document.querySelector('.policy-number');
@@ -413,22 +471,27 @@ function loadBylawDetail() {
         bylawUpdated.textContent = `Last Updated: ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
     }
     
-    // Update sidebar with other bylaws
-    updateBylawSidebar(bylaw);
+        // Update sidebar with other bylaws
+        await updateBylawSidebar(bylaw);
+    } catch (error) {
+        console.error('Error loading bylaw detail:', error);
+        document.querySelector('.policy-detail-container').innerHTML = '<div class="no-results">Error loading bylaw. Please try again later.</div>';
+    }
 }
 
 /**
  * Updates the policy sidebar with links to other approved policies.
  * Groups policies by section and excludes the current policy.
  * @param {Object} currentPolicy - The currently displayed policy object.
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function updatePolicySidebar(currentPolicy) {
+async function updatePolicySidebar(currentPolicy) {
     const sidebar = document.querySelector('.policy-sidebar');
     if (!sidebar) return;
     
-    const approvedPolicies = getApprovedPolicies();
-    const otherPolicies = approvedPolicies.filter(p => p.id !== currentPolicy.id);
+    try {
+        const approvedPolicies = await getApprovedPolicies();
+        const otherPolicies = approvedPolicies.filter(p => p.id !== currentPolicy.id);
     
     if (otherPolicies.length === 0) {
         sidebar.innerHTML = '<h3 class="sidebar-title">Other Policies</h3><div class="sidebar-section"><p>No other policies available</p></div>';
@@ -453,7 +516,7 @@ function updatePolicySidebar(currentPolicy) {
         bySection[section].forEach(policy => {
             const name = policy.name || policy.policyName || 'Untitled';
             const policyId = policy.policyId || policy.id;
-            html += `<a href="/public/policy-detail.html?id=${policy.id}" class="sidebar-link-small">${policyId} - ${name}</a>`;
+            html += `<a href="/frontend/public/policy-detail.html?id=${policy.id}" class="sidebar-link-small">${policyId} - ${name}</a>`;
         });
         html += `</div>`;
     });
@@ -465,14 +528,15 @@ function updatePolicySidebar(currentPolicy) {
  * Updates the bylaw sidebar with links to other approved bylaws.
  * Excludes the current bylaw from the list.
  * @param {Object} currentBylaw - The currently displayed bylaw object.
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function updateBylawSidebar(currentBylaw) {
+async function updateBylawSidebar(currentBylaw) {
     const sidebar = document.querySelector('.policy-sidebar');
     if (!sidebar) return;
     
-    const approvedBylaws = getApprovedBylaws();
-    const otherBylaws = approvedBylaws.filter(b => b.id !== currentBylaw.id);
+    try {
+        const approvedBylaws = await getApprovedBylaws();
+        const otherBylaws = approvedBylaws.filter(b => b.id !== currentBylaw.id);
     
     if (otherBylaws.length === 0) {
         sidebar.innerHTML = '<h3 class="sidebar-title">Other Bylaws</h3><div class="sidebar-section"><p>No other bylaws available</p></div>';
@@ -483,54 +547,63 @@ function updateBylawSidebar(currentBylaw) {
     otherBylaws.forEach(bylaw => {
         const title = bylaw.title || bylaw.bylawTitle || 'Untitled';
         const number = bylaw.number || bylaw.bylawNumber || '';
-        html += `<a href="/public/bylaw-detail.html?id=${bylaw.id}" class="sidebar-link">Bylaw #${number} - ${title}</a>`;
+        html += `<a href="/frontend/public/bylaw-detail.html?id=${bylaw.id}" class="sidebar-link">Bylaw #${number} - ${title}</a>`;
     });
-    html += '</div>';
-    
-    sidebar.innerHTML = html;
+        html += '</div>';
+        
+        sidebar.innerHTML = html;
+    } catch (error) {
+        console.error('Error updating bylaw sidebar:', error);
+        sidebar.innerHTML = '<h3 class="sidebar-title">Other Bylaws</h3><div class="sidebar-section"><p>Error loading bylaws</p></div>';
+    }
 }
 
 /**
  * Populates the suggestions form dropdown with approved policies.
  * Groups policies by section for better organization.
- * @returns {void}
+ * @returns {Promise<void>}
  */
-function populateSuggestionsDropdown() {
+async function populateSuggestionsDropdown() {
     const policySelect = document.getElementById('policySelect');
     if (!policySelect) return;
     
-    const approvedPolicies = getApprovedPolicies();
+    try {
+        const approvedPolicies = await getApprovedPolicies();
     
-    // Clear existing options except the first one
-    policySelect.innerHTML = '<option value="">Select</option>';
-    
-    if (approvedPolicies.length === 0) {
-        policySelect.innerHTML += '<option value="">No policies available</option>';
-        return;
-    }
-    
-    // Group by section
-    const bySection = {};
-    approvedPolicies.forEach(policy => {
-        const section = policy.section || '1';
-        if (!bySection[section]) {
-            bySection[section] = [];
+        // Clear existing options except the first one
+        policySelect.innerHTML = '<option value="">Select</option>';
+        
+        if (approvedPolicies.length === 0) {
+            policySelect.innerHTML += '<option value="">No policies available</option>';
+            return;
         }
-        bySection[section].push(policy);
-    });
-    
-    // Add options grouped by section
-    Object.keys(bySection).sort().forEach(section => {
-        const sectionName = getSectionName(section);
-        bySection[section].forEach(policy => {
-            const name = policy.name || policy.policyName || 'Untitled';
-            const policyId = policy.policyId || policy.id;
-            const option = document.createElement('option');
-            option.value = policy.id;
-            option.textContent = `${policyId} - ${name} (${sectionName})`;
-            policySelect.appendChild(option);
+        
+        // Group by section
+        const bySection = {};
+        approvedPolicies.forEach(policy => {
+            const section = policy.section || '1';
+            if (!bySection[section]) {
+                bySection[section] = [];
+            }
+            bySection[section].push(policy);
         });
-    });
+        
+        // Add options grouped by section
+        Object.keys(bySection).sort().forEach(section => {
+            const sectionName = getSectionName(section);
+            bySection[section].forEach(policy => {
+                const name = policy.name || policy.policyName || 'Untitled';
+                const policyId = policy.policyId || policy.id;
+                const option = document.createElement('option');
+                option.value = policy.id;
+                option.textContent = `${policyId} - ${name} (${sectionName})`;
+                policySelect.appendChild(option);
+            });
+        });
+    } catch (error) {
+        console.error('Error populating suggestions dropdown:', error);
+        policySelect.innerHTML = '<option value="">Error loading policies</option>';
+    }
 }
 
 // Initialize
@@ -546,13 +619,13 @@ document.addEventListener('DOMContentLoaded', function() {
         if (searchInput) {
             searchInput.addEventListener('input', handleSearch);
         }
-        renderSections();
+        renderSections().catch(err => console.error('Error rendering sections:', err));
     } else if (bylawsContainer) {
         // Bylaws page
         if (searchInput) {
             searchInput.addEventListener('input', handleBylawSearch);
         }
-        renderBylaws();
+        renderBylaws().catch(err => console.error('Error rendering bylaws:', err));
         
         // Download PDF button handler
         const downloadBtn = document.querySelector('.download-pdf-btn');
@@ -563,30 +636,25 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     } else if (policyDetailContainer) {
-        // Check if it's a policy or bylaw detail page
+        // Check if it's a policy or bylaw detail page - try loading both
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         
         if (id) {
-            const policies = getPolicies();
-            const bylaws = getBylaws();
-            const isPolicy = policies.some(p => p.id === id);
-            const isBylaw = bylaws.some(b => b.id === id);
-            
-            if (isPolicy) {
-                loadPolicyDetail();
-            } else if (isBylaw) {
-                loadBylawDetail();
-            }
+            // Try policy first, then bylaw
+            loadPolicyDetail().catch(() => {
+                // If policy fails, try bylaw
+                loadBylawDetail().catch(err => console.error('Error loading detail:', err));
+            });
         }
     }
     
     // Populate suggestions dropdown
-    populateSuggestionsDropdown();
+    populateSuggestionsDropdown().catch(err => console.error('Error populating dropdown:', err));
     
     // Suggestion Form Handler
     if (suggestionForm) {
-        suggestionForm.addEventListener('submit', function(e) {
+        suggestionForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const policySelect = document.getElementById('policySelect');
@@ -622,31 +690,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Get existing suggestions
-            const existingSuggestions = JSON.parse(localStorage.getItem(STORAGE_KEYS.SUGGESTIONS) || '[]');
+            try {
+                // Submit suggestion to API
+                await asaAPI.suggestions.createSuggestion({
+                    policy_id: selectedPolicyId,
+                    suggestion: suggestion,
+                    email: email
+                });
             
-            // Create new suggestion
-            const newSuggestion = {
-                id: 'suggestion_' + Date.now(),
-                policyId: selectedPolicyId,
-                suggestion: suggestion,
-                status: 'pending',
-                createdAt: new Date().toISOString()
-            };
-            
-            // Add to suggestions
-            existingSuggestions.push(newSuggestion);
-            localStorage.setItem(STORAGE_KEYS.SUGGESTIONS, JSON.stringify(existingSuggestions));
-            
-            // Show success message
-            alert('Thank you for your suggestion!\n\nYour feedback has been submitted successfully.');
-            
-            // Reset form
-            policySelect.value = '';
-            suggestionText.value = '';
-            emailInput.value = '';
-            
-            showSuccessMessage();
+                // Show success message
+                alert('Thank you for your suggestion!\n\nYour feedback has been submitted successfully.');
+                
+                // Reset form
+                policySelect.value = '';
+                suggestionText.value = '';
+                emailInput.value = '';
+                
+                showSuccessMessage();
+            } catch (error) {
+                console.error('Error submitting suggestion:', error);
+                alert('Error submitting suggestion. Please try again later.\n\nError: ' + (error.message || 'Unknown error'));
+            }
         });
     }
 });
